@@ -30,28 +30,51 @@ async def on_ready():
         activity=discord.Game(name="메이플랜드 새벽 길드")
     )
 
+# 중복 처리 방지를 위한 메시지 캐시
+processed_messages = set()
+
 @bot.event
 async def on_message(message):
     # 봇 자신의 메시지는 무시
     if message.author == bot.user:
         return
     
+    # 중복 처리 방지 (같은 메시지 ID)
+    if message.id in processed_messages:
+        logger.warning(f"⚠️ 중복 메시지 처리 시도 무시: {message.id}")
+        return
+    
     # 허용된 채널 체크 (설정에서 비어있으면 모든 채널 허용)
     if ALLOWED_CHANNELS and str(message.channel.id) not in ALLOWED_CHANNELS:
         return
     
+    # 명령어인 경우 로깅 및 캐시 추가
+    if message.content.startswith(COMMAND_PREFIX):
+        processed_messages.add(message.id)
+        logger.info(f"📝 명령어 처리: {message.content[:50]} (User: {message.author}, Channel: {message.channel.id})")
+        
+        # 캐시 크기 제한 (최근 1000개만 유지)
+        if len(processed_messages) > 1000:
+            processed_messages.clear()
+    
     # 명령어 처리
     await bot.process_commands(message)
+
+@bot.event 
+async def on_command_completion(ctx):
+    """명령어 완료 시 로깅"""
+    logger.info(f"✅ 명령어 완료: {ctx.command.name} (User: {ctx.author}, Channel: {ctx.channel.id})")
 
 @bot.event
 async def on_command_error(ctx, error):
     """명령어 에러 핸들러"""
+    logger.error(f"❌ 명령어 에러 ({ctx.command}): {error}")
+    
     if isinstance(error, commands.CommandNotFound):
         await ctx.send(f"❌ 알 수 없는 명령어입니다. `{COMMAND_PREFIX}도움말`을 확인해보세요!")
     elif isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(f"❌ 명령어에 필요한 인수가 부족합니다.")
     else:
-        logger.error(f"명령어 에러: {error}")
         await ctx.send("❌ 명령어 실행 중 오류가 발생했습니다.")
 
 async def load_commands():
