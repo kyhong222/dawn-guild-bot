@@ -194,12 +194,34 @@ class MashopAPI:
             "페리": "페리온",
             "헤네": "헤네시스",
             "루디": "루디브리엄",
-            "아쿠": "아쿠아로드"
+            "아쿠": "아쿠아로드",
+            "깊바협1": "깊은 바다 협곡1",
+            "깊바협2": "깊은 바다 협곡2",
+            "위바협1": "위험한 바다 협곡1", 
+            "위바협2": "위험한 바다 협곡2",
+            "깊은바다1": "깊은 바다 협곡1",
+            "깊은바다2": "깊은 바다 협곡2",
+            "위험한바다1": "위험한 바다 협곡1",
+            "위험한바다2": "위험한 바다 협곡2",
+            "남용": "남겨진 용의 둥지",
+            "남겨진용": "남겨진 용의 둥지"
         }
         
         # 줄임말을 실제 이름으로 변환
         if search_clean in nickname_map:
             search_clean = nickname_map[search_clean]
+        
+        # 더 적극적인 키워드 매칭도 시도
+        keyword_expansions = {
+            "깊은바다": "깊은바다협곡",
+            "위험한바다": "위험한바다협곡", 
+            "남용": "남겨진용의둥지"
+        }
+        
+        for keyword, expansion in keyword_expansions.items():
+            if keyword in search_clean:
+                search_clean = search_clean.replace(keyword, expansion)
+                break
         
         # 정확한 매칭 먼저 시도
         for map_info in maps_data:
@@ -209,7 +231,23 @@ class MashopAPI:
             if search_clean == map_clean:
                 return map_info
         
-        # 포함 매칭
+        # 스마트 키워드 매칭
+        search_keywords = self._extract_keywords(search_name)
+        best_match = None
+        max_score = 0
+        
+        for map_info in maps_data:
+            map_name = map_info['mapName']
+            score = self._calculate_match_score(search_keywords, map_name, search_name)
+            
+            if score > max_score and score >= 0.6:  # 60% 이상 매칭
+                max_score = score
+                best_match = map_info
+        
+        if best_match:
+            return best_match
+        
+        # 포함 매칭 (fallback)
         for map_info in maps_data:
             map_name = map_info['mapName']
             map_clean = map_name.replace(" ", "").replace(":", "").lower()
@@ -359,3 +397,61 @@ class MashopAPI:
             result += f"\n\n{data['note']}"
         
         return result
+    
+    def _extract_keywords(self, search_text: str) -> List[str]:
+        """검색어에서 키워드 추출"""
+        # 숫자와 한글 분리
+        keywords = []
+        
+        # 공통 줄임말 패턴
+        patterns = {
+            r'깊바협(\d+)': r'깊은 바다 협곡\1',
+            r'위바협(\d+)': r'위험한 바다 협곡\1',
+            r'남용': '남겨진 용의 둥지',
+            r'죽둥': '죽은용의둥지',
+            r'망둥': '망가진용의둥지'
+        }
+        
+        import re
+        expanded_text = search_text
+        for pattern, replacement in patterns.items():
+            expanded_text = re.sub(pattern, replacement, expanded_text)
+        
+        # 키워드 분리
+        keywords.extend(expanded_text.replace(" ", "").split())
+        keywords.extend(search_text.replace(" ", "").split())
+        
+        return list(set(keywords))  # 중복 제거
+    
+    def _calculate_match_score(self, search_keywords: List[str], map_name: str, original_search: str) -> float:
+        """매칭 점수 계산"""
+        map_clean = map_name.replace(" ", "").replace(":", "").lower()
+        original_clean = original_search.replace(" ", "").lower()
+        
+        # 완전 일치 점수
+        if original_clean in map_clean or map_clean in original_clean:
+            return 1.0
+        
+        # 키워드 매칭 점수
+        matched_keywords = 0
+        for keyword in search_keywords:
+            keyword_clean = keyword.replace(" ", "").lower()
+            if keyword_clean in map_clean:
+                matched_keywords += 1
+        
+        if not search_keywords:
+            return 0.0
+        
+        keyword_score = matched_keywords / len(search_keywords)
+        
+        # 특별 보너스: 숫자 매칭
+        import re
+        search_numbers = re.findall(r'\d+', original_search)
+        map_numbers = re.findall(r'\d+', map_name)
+        
+        number_bonus = 0.0
+        if search_numbers and map_numbers:
+            if any(num in map_numbers for num in search_numbers):
+                number_bonus = 0.3
+        
+        return min(1.0, keyword_score + number_bonus)
