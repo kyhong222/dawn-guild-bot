@@ -76,7 +76,7 @@ class BasicCommands(commands.Cog):
             
         await ctx.send(embed=embed)
 
-    @commands.command(name='도움말', aliases=['help'])
+    @commands.command(name='도움말', aliases=['명령어'])
     async def help_command(self, ctx):
         """사용 가능한 명령어 목록을 표시합니다"""
         embed = discord.Embed(
@@ -89,6 +89,12 @@ class BasicCommands(commands.Cog):
         embed.add_field(
             name="🏓 기본 명령어",
             value="`!핑` - 봇 응답속도 확인\n`!길드` - 길드 정보 표시",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="📊 자리값 조회",
+            value="`!자리값 맵이름` - 메랜샵 자리값 확인\n`!인기맵` - 핫한 자리 맵 TOP 10\n`!자리값도움말` - 자리값 명령어 도움말",
             inline=False
         )
         

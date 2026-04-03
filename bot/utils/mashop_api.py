@@ -38,7 +38,14 @@ class MashopAPI:
                 if jari_data:
                     return self._parse_jari_data(jari_data, map_name)
                 else:
-                    return {"error": f"'{map_name}'의 자리값 정보를 가져올 수 없습니다."}
+                    # 자리값 정보가 없는 경우
+                    return {
+                        "sell_prices": [],
+                        "buy_prices": [],
+                        "source_url": f"{self.base_url}/jari/{urllib.parse.quote(map_name)}",
+                        "map_name": map_name,
+                        "note": f"현재 '{map_name}'의 자리값 정보가 없습니다. 메랜샵에서 확인해보세요!"
+                    }
                     
         except Exception as e:
             return {"error": f"검색 중 오류: {str(e)}"}
@@ -267,9 +274,15 @@ class MashopAPI:
                 except:
                     continue
             
-            # 가격이 없으면 에러 반환
+            # 가격이 없으면 안내 메시지 반환
             if not sell_prices and not buy_prices:
-                return {"error": f"'{map_name}'의 자리값 정보가 없습니다."}
+                return {
+                    "sell_prices": [],
+                    "buy_prices": [],
+                    "source_url": f"{self.base_url}/jari/{urllib.parse.quote(map_name)}",
+                    "map_name": map_name,
+                    "note": f"현재 '{map_name}'의 자리값 정보가 없습니다. 메랜샵에서 확인해보세요!"
+                }
                 
             return {
                 "sell_prices": sell_prices,
@@ -324,7 +337,11 @@ class MashopAPI:
         buy_prices = data.get("buy_prices", [])
         
         if not sell_prices and not buy_prices:
-            return "❌ 해당 맵의 자리값 정보를 찾을 수 없습니다."
+            note = data.get("note", "")
+            if note:
+                return f"📋 {note}"
+            else:
+                return "❌ 해당 맵의 자리값 정보를 찾을 수 없습니다."
         
         summary = []
         

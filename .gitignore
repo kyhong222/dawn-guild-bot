@@ -36,6 +36,11 @@ jspm_packages/
 # macOS
 .DS_Store
 
+# Data files (user data, keep local)
+data/*.json
+data/*.db
+!data/.gitkeep
+
 # OpenClaw workspace files (keep these local)
 AGENTS.md
 SOUL.md

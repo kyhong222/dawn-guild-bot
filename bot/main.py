@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 # Intents 설정
 intents = discord.Intents.default()
 intents.message_content = True
+# 필요한 경우에만 privileged intents 활성화
 
 # 봇 인스턴스 생성
 bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
