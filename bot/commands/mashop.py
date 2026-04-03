@@ -83,7 +83,9 @@ class MashopCommands(commands.Cog):
                     inline=False
                 )
             
-            embed.set_footer(text="💡 가격은 메랜샵 기준이며 실제와 다를 수 있습니다.")
+            import time
+            response_id = int(time.time() * 1000) % 100000  # 고유 응답 ID
+            embed.set_footer(text=f"💡 새벽길드봇 응답 #{response_id} | 메랜샵 실시간 데이터")
             
             await loading_msg.edit(content="", embed=embed)
             

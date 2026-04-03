@@ -39,7 +39,9 @@ class BasicCommands(commands.Cog):
             value=f"{response_time}ms", 
             inline=True
         )
-        embed.set_footer(text=f"요청자: {ctx.author.display_name}")
+        import time
+        response_id = int(time.time() * 1000) % 100000
+        embed.set_footer(text=f"새벽길드봇 #{response_id} | 요청자: {ctx.author.display_name}")
         
         await message.edit(content="", embed=embed)
 
