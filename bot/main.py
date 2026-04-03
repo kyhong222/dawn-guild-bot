@@ -22,12 +22,19 @@ bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
 
 @bot.event
 async def on_ready():
-    logger.info(f'🌅 {bot.user}가 준비되었습니다!')
+    import os
+    import time
+    
+    start_time = time.strftime("%Y-%m-%d %H:%M:%S")
+    process_id = os.getpid()
+    
+    logger.info(f'🌅 {bot.user}가 준비되었습니다! (PID: {process_id})')
     logger.info(f'📊 {len(bot.guilds)}개 서버에서 활동 중')
+    logger.info(f'⏰ 시작 시간: {start_time}')
     
     # 봇 상태 설정
     await bot.change_presence(
-        activity=discord.Game(name="메이플랜드 새벽 길드")
+        activity=discord.Game(name=f"메이플랜드 새벽 길드 | PID:{process_id}")
     )
 
 # 중복 처리 방지를 위한 메시지 캐시
@@ -103,4 +110,22 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
-    asyncio.run(main())
+    import sys
+    import signal
+    
+    # 중복 실행 방지
+    def signal_handler(sig, frame):
+        logger.info("봇 종료 신호를 받았습니다.")
+        sys.exit(0)
+    
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    
+    try:
+        logger.info("🚀 새벽길드봇 시작 중...")
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("👋 봇이 정상적으로 종료되었습니다.")
+    except Exception as e:
+        logger.error(f"❌ 봇 실행 중 치명적 오류: {e}")
+        sys.exit(1)
