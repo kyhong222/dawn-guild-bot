@@ -1,5 +1,5 @@
 {
-  "name": "saebyeok-guild-bot",
+  "name": "dawn-guild-bot",
   "version": "1.0.0",
   "description": "메이플랜드 새벽 길드 디스코드 봇",
   "main": "src/index.js",
