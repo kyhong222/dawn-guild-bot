@@ -4,14 +4,14 @@
 import discord
 from discord.ext import commands
 from bot.config.settings import BOT_COLOR
-from bot.utils.mashop_api import MashopAPI
+from bot.utils.mashop_simple import SimpleMashopAPI
 import asyncio
 from typing import Dict
 
 class MashopCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.mashop_api = MashopAPI()
+        self.mashop_api = SimpleMashopAPI()
 
     @commands.command(name='자리값', aliases=['자리', '가격'])
     async def check_spot_price(self, ctx, *, map_name: str):

@@ -24,9 +24,9 @@ class MashopAPI:
                     'Referer': 'https://mashop.kr/'
                 }
                 
-                # 1. 먼저 전체 맵 목록에서 검색할 맵 찾기
+                # 1. 먼저 전체 맵 목록에서 검색할 맵 찾기  
                 maps_data = await self._get_all_maps(session, headers)
-                target_map = self._find_matching_map(maps_data, map_name)
+                target_map = self._simple_search(maps_data, map_name)
                 
                 if not target_map:
                     return {"error": f"'{map_name}' 맵을 찾을 수 없습니다."}
@@ -183,7 +183,8 @@ class MashopAPI:
             pass
         return []
     
-    def _find_matching_map(self, maps_data: List[Dict], search_name: str) -> Optional[Dict]:
+    def _simple_search(self, maps_data: List[Dict], search_name: str) -> Optional[Dict]:
+        """간단하고 효과적인 맵 검색"""
         """검색어와 일치하는 맵 찾기"""
         search_clean = search_name.replace(" ", "").lower()
         
