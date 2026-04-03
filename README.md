@@ -1,33 +1,30 @@
 # 🌅 새벽 길드봇
 
-메이플랜드 새벽 길드를 위한 디스코드 봇입니다.
+메이플랜드 새벽 길드를 위한 Python 디스코드 봇입니다.
 
 ## 🚀 설치 및 실행
 
-### 1. 의존성 설치
+### 1. Python 가상환경 생성 (권장)
 ```bash
-npm install
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
 ```
 
-### 2. 환경변수 설정
-`.env.example`을 참고하여 `.env` 파일을 생성하고 다음 정보를 입력해주세요:
+### 2. 의존성 설치
+```bash
+pip install -r requirements.txt
+```
+
+### 3. 환경변수 설정
+`.env.example`을 참고하여 `.env` 파일을 생성하고 Discord 봇 토큰을 입력해주세요:
 
 ```env
 DISCORD_TOKEN=your_bot_token_here
-CLIENT_ID=your_client_id_here
-GUILD_ID=your_guild_id_here
-```
-
-### 3. 커맨드 등록
-```bash
-npm run deploy
 ```
 
 ### 4. 봇 실행
 ```bash
-npm start
-# 또는 개발 모드
-npm run dev
+python run.py
 ```
 
 ## 🤖 Discord Bot 설정
@@ -48,22 +45,24 @@ npm run dev
 ## 📁 프로젝트 구조
 
 ```
-src/
-├── index.js           # 메인 봇 파일
-├── deploy-commands.js # 커맨드 등록 스크립트
-├── commands/          # 슬래시 커맨드들
-│   ├── ping.js        # 핑 커맨드
-│   └── guild.js       # 길드 정보 커맨드
-├── events/            # 이벤트 핸들러들
-│   ├── ready.js       # 봇 준비 이벤트
-│   └── interactionCreate.js # 상호작용 이벤트
-└── utils/             # 유틸리티 함수들
+bot/
+├── main.py            # 메인 봇 오케스트레이터
+├── commands/          # 명령어 모듈들
+│   ├── basic.py       # 기본 명령어 (!핑, !길드, !도움말)
+│   └── ...            # 추가 기능 모듈들
+├── utils/             # 유틸리티 함수들
+│   └── helpers.py     # 헬퍼 함수들
+├── config/            # 설정 파일들
+│   └── settings.py    # 봇 설정값들
+└── __init__.py
+run.py                 # 봇 실행 파일
 ```
 
 ## 🎮 현재 기능
 
-- `/핑` - 봇 응답속도 확인
-- `/길드` - 새벽 길드 정보 표시
+- `!핑` - 봇 응답속도 확인
+- `!길드` - 새벽 길드 정보 표시  
+- `!도움말` - 명령어 목록 표시
 
 ## 🔮 추후 추가 예정
 
@@ -74,16 +73,27 @@ src/
 
 ## 📝 개발 가이드
 
-### 새 커맨드 추가하기:
-1. `src/commands/` 폴더에 새 파일 생성
-2. SlashCommandBuilder로 커맨드 정의
-3. `npm run deploy`로 커맨드 등록
-4. 봇 재시작
+### 새 명령어 추가하기:
+1. `bot/commands/` 폴더에 새 파일 생성
+2. `commands.Cog` 클래스를 상속받아 명령어 정의
+3. `setup(bot)` 함수로 Cog 등록
+4. 봇 재시작 (자동으로 로드됨)
 
-### 새 이벤트 추가하기:
-1. `src/events/` 폴더에 새 파일 생성
-2. 이벤트 핸들러 작성
-3. 봇 재시작
+### 명령어 구조 예시:
+```python
+from discord.ext import commands
+
+class NewCommands(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+    
+    @commands.command(name='새명령어')
+    async def new_command(self, ctx):
+        await ctx.send("새 명령어입니다!")
+
+async def setup(bot):
+    await bot.add_cog(NewCommands(bot))
+```
 
 ## 🤝 기여하기
 
