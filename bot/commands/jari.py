@@ -67,11 +67,17 @@ class JariCommands(commands.Cog):
             )
 
             # 팝니다 정보
-            if price_info["sell_prices"]:
-                sell_text = " / ".join([f"{p}만" for p in price_info["sell_prices"]])
+            if price_info["sell_items"]:
+                sell_lines = []
+                for item in price_info["sell_items"]:
+                    line = f"• **{item['price']}만**"
+                    if item['comment']:
+                        line += f" - {item['comment']}"
+                    sell_lines.append(line)
+                sell_text = "\n".join(sell_lines)
                 embed.add_field(
-                    name=f"📤 팝니다 (최근 {len(price_info['sell_prices'])}개)",
-                    value=f"{sell_text}\n평균: **{price_info['sell_avg']}만 메소**",
+                    name=f"📤 팝니다 (최근 {len(price_info['sell_items'])}개)",
+                    value=f"{sell_text}\n\n평균: **{price_info['sell_avg']}만 메소**",
                     inline=False
                 )
             else:
@@ -82,11 +88,17 @@ class JariCommands(commands.Cog):
                 )
 
             # 삽니다 정보
-            if price_info["buy_prices"]:
-                buy_text = " / ".join([f"{p}만" for p in price_info["buy_prices"]])
+            if price_info["buy_items"]:
+                buy_lines = []
+                for item in price_info["buy_items"]:
+                    line = f"• **{item['price']}만**"
+                    if item['comment']:
+                        line += f" - {item['comment']}"
+                    buy_lines.append(line)
+                buy_text = "\n".join(buy_lines)
                 embed.add_field(
-                    name=f"📥 삽니다 (최근 {len(price_info['buy_prices'])}개)",
-                    value=f"{buy_text}\n평균: **{price_info['buy_avg']}만 메소**",
+                    name=f"📥 삽니다 (최근 {len(price_info['buy_items'])}개)",
+                    value=f"{buy_text}\n\n평균: **{price_info['buy_avg']}만 메소**",
                     inline=False
                 )
             else:

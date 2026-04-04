@@ -108,12 +108,23 @@ class MashopAPI:
         recent_sells = sells[:5]
         recent_buys = buys[:5]
 
-        # 가격 추출 (만메소 단위로 변환)
-        sell_prices = [t.get("price", 0) // 10000 for t in recent_sells]
-        buy_prices = [t.get("price", 0) // 10000 for t in recent_buys]
+        # 가격 + 메모 추출
+        sell_items = [
+            {"price": t.get("price", 0) // 10000, "comment": t.get("comment", "")}
+            for t in recent_sells
+        ]
+        buy_items = [
+            {"price": t.get("price", 0) // 10000, "comment": t.get("comment", "")}
+            for t in recent_buys
+        ]
+
+        sell_prices = [item["price"] for item in sell_items]
+        buy_prices = [item["price"] for item in buy_items]
 
         return {
             "map_name": map_name,
+            "sell_items": sell_items,
+            "buy_items": buy_items,
             "sell_prices": sell_prices,
             "buy_prices": buy_prices,
             "sell_avg": sum(sell_prices) // len(sell_prices) if sell_prices else 0,
