@@ -76,8 +76,8 @@ class JariCommands(commands.Cog):
                     sell_lines.append(line)
                 sell_text = "\n".join(sell_lines)
                 embed.add_field(
-                    name=f"📤 팝니다 (최근 {len(price_info['sell_items'])}개)",
-                    value=f"{sell_text}\n\n평균: **{price_info['sell_avg']}만 메소**",
+                    name=f"📤 팝니다(최근 {len(price_info['sell_items'])}개) - 평균: {price_info['sell_avg']}만 메소",
+                    value=sell_text,
                     inline=False
                 )
             else:
@@ -97,8 +97,8 @@ class JariCommands(commands.Cog):
                     buy_lines.append(line)
                 buy_text = "\n".join(buy_lines)
                 embed.add_field(
-                    name=f"📥 삽니다 (최근 {len(price_info['buy_items'])}개)",
-                    value=f"{buy_text}\n\n평균: **{price_info['buy_avg']}만 메소**",
+                    name=f"📥 삽니다(최근 {len(price_info['buy_items'])}개) - 평균: {price_info['buy_avg']}만 메소",
+                    value=buy_text,
                     inline=False
                 )
             else:
