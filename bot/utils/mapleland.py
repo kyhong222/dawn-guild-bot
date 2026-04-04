@@ -32,8 +32,27 @@ class MaplelandAPI:
                     return self._item_cache
                 return []
 
+    def _match_abbreviation(self, query: str, item_name: str) -> bool:
+        """줄임말 매칭 (파엘 → 파워 엘릭서)"""
+        words = item_name.replace(":", " ").split()
+        query_chars = list(query)
+        word_idx = 0
+
+        for char in query_chars:
+            found = False
+            while word_idx < len(words):
+                if words[word_idx].startswith(char):
+                    found = True
+                    word_idx += 1
+                    break
+                word_idx += 1
+            if not found:
+                return False
+
+        return True
+
     async def search_item(self, query: str) -> List[Dict]:
-        """아이템 이름 검색"""
+        """아이템 이름 검색 (like 검색 + 줄임말 검색)"""
         all_items = await self.get_all_items()
         query_lower = query.lower().replace(" ", "")
 
@@ -41,7 +60,12 @@ class MaplelandAPI:
         for item in all_items:
             item_name = item.get("itemName", "")
             item_name_normalized = item_name.lower().replace(" ", "")
+
+            # 1. 단순 포함 검색
             if query_lower in item_name_normalized:
+                matches.append(item)
+            # 2. 줄임말 매칭
+            elif self._match_abbreviation(query, item_name):
                 matches.append(item)
 
         return matches
