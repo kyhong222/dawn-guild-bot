@@ -89,6 +89,26 @@ class MashopAPI:
                     return await response.json()
                 return []
 
+    def _filter_outliers(self, items: List[Dict], threshold: float = 0.5) -> List[Dict]:
+        """이상치 제거 (중앙값 기준 threshold 이상 차이나면 제외)"""
+        if len(items) < 3:
+            return items
+
+        prices = [item["price"] for item in items]
+        sorted_prices = sorted(prices)
+        median = sorted_prices[len(sorted_prices) // 2]
+
+        if median == 0:
+            return items
+
+        filtered = []
+        for item in items:
+            diff_ratio = abs(item["price"] - median) / median
+            if diff_ratio <= threshold:
+                filtered.append(item)
+
+        return filtered if filtered else items
+
     async def get_price_summary(self, map_name: str) -> Dict:
         """맵의 가격 요약 정보"""
         trades = await self.get_trades(map_name)
@@ -104,9 +124,9 @@ class MashopAPI:
         sells.sort(key=lambda x: x.get("createTime", ""), reverse=True)
         buys.sort(key=lambda x: x.get("createTime", ""), reverse=True)
 
-        # 최근 5개씩
-        recent_sells = sells[:5]
-        recent_buys = buys[:5]
+        # 최근 10개에서 이상치 제거 후 5개 선택
+        recent_sells = sells[:10]
+        recent_buys = buys[:10]
 
         # 가격 + 메모 추출
         sell_items = [
@@ -117,6 +137,10 @@ class MashopAPI:
             {"price": t.get("price", 0) // 10000, "comment": t.get("comment", "")}
             for t in recent_buys
         ]
+
+        # 이상치 제거 후 최대 5개
+        sell_items = self._filter_outliers(sell_items)[:5]
+        buy_items = self._filter_outliers(buy_items)[:5]
 
         sell_prices = [item["price"] for item in sell_items]
         buy_prices = [item["price"] for item in buy_items]
