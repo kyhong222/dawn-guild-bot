@@ -11,7 +11,7 @@ class JariCommands(commands.Cog):
         self.bot = bot
         self.api = MashopAPI()
 
-    @commands.command(name='자리값', aliases=['자리', '가격'])
+    @commands.command(name='자리값', aliases=['자리'])
     async def jari_command(self, ctx, *, query: str):
         """자리값 조회: !자리값 맵이름"""
 
