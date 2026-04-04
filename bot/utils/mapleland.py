@@ -51,22 +51,17 @@ class MaplelandAPI:
         return tokens
 
     def _match_abbreviation(self, query: str, item_name: str) -> bool:
-        """줄임말 매칭 (파엘 → 파워 엘릭서, 신프10 → 신발 점프력 주문서 10%)"""
-        words = item_name.replace(":", " ").split()
+        """줄임말 매칭 (파엘 → 파워 엘릭서, 드샤보 → 드래곤 샤인보우)"""
+        # 공백 제거한 아이템 이름에서 토큰들이 순서대로 나타나는지 확인
+        item_name_flat = item_name.replace(":", "").replace(" ", "")
         query_tokens = self._tokenize_query(query)
-        word_idx = 0
 
+        pos = 0
         for token in query_tokens:
-            found = False
-            while word_idx < len(words):
-                # 단어 안에 토큰이 포함되면 매칭
-                if token in words[word_idx]:
-                    found = True
-                    word_idx += 1
-                    break
-                word_idx += 1
-            if not found:
+            idx = item_name_flat.find(token, pos)
+            if idx == -1:
                 return False
+            pos = idx + len(token)
 
         return True
 
