@@ -1,6 +1,7 @@
 """자리값 조회 명령어"""
 import discord
 from discord.ext import commands
+from urllib.parse import quote
 from bot.config.settings import BOT_COLOR
 from bot.utils.mashop import MashopAPI
 
@@ -94,6 +95,14 @@ class JariCommands(commands.Cog):
                     value="현재 매물이 없습니다.",
                     inline=False
                 )
+
+            # 메랜샵 링크
+            mashop_url = f"https://mashop.kr/jari/{quote(map_name)}"
+            embed.add_field(
+                name="🔗 링크",
+                value=f"[메랜샵에서 확인하기]({mashop_url})",
+                inline=False
+            )
 
             embed.set_footer(text="메랜샵 실시간 데이터")
 
