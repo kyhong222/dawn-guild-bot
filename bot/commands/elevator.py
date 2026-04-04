@@ -79,59 +79,64 @@ class Elevator(commands.Cog):
         status_text, direction = self._get_status_text(state)
         seconds_left = 60 - current_second
 
+        # 다음 탑승 시간 계산
+        up_times = self._get_next_boarding_times(now, going_up=True, count=3)
+        down_times = self._get_next_boarding_times(now, going_up=False, count=3)
+
+        # 루디브리엄 상태 텍스트
+        if state == 3:  # 루디 대기중
+            ludi_status = f"**{seconds_left}초 후 출발**"
+        else:
+            first_down = down_times[0]
+            diff = (first_down - now.replace(microsecond=0)).total_seconds()
+            mins, secs = int(diff // 60), int(diff % 60)
+            ludi_status = f"다음 탑승: {self._format_time(mins, secs)} 후"
+
+        # 아랫마을 상태 텍스트
+        if state == 1:  # 아랫마을 대기중
+            arae_status = f"**{seconds_left}초 후 출발**"
+        else:
+            first_up = up_times[0]
+            diff = (first_up - now.replace(microsecond=0)).total_seconds()
+            mins, secs = int(diff // 60), int(diff % 60)
+            arae_status = f"다음 탑승: {self._format_time(mins, secs)} 후"
+
+        # 현재 상태 텍스트
+        if state == 1:
+            current_status = "🟢 아랫마을 대기중 (탑승 가능)"
+        elif state == 2:
+            current_status = f"🔼 루디브리엄으로 운행중 ({seconds_left}초 후 도착)"
+        elif state == 3:
+            current_status = "🟢 루디브리엄 대기중 (탑승 가능)"
+        else:
+            current_status = f"🔽 아랫마을로 운행중 ({seconds_left}초 후 도착)"
+
+        # 시각적 레이아웃 구성
+        down_times_str = ", ".join([t.strftime("%H:%M") for t in down_times])
+        up_times_str = ", ".join([t.strftime("%H:%M") for t in up_times])
+
+        layout = f"""```
+┌─────────────────────────┐
+│  루디브리엄 ({ludi_status})
+│  탑승 가능: {down_times_str}
+│          │
+│          ▼
+│    ─ ─ ─ ─ ─ ─
+│          ▲
+│          │
+│  탑승 가능: {up_times_str}
+│  아랫마을 ({arae_status})
+└─────────────────────────┘
+```"""
+
         # 임베드 생성
         embed = discord.Embed(
             title="🛗 엘레베이터 시간표",
+            description=f"**{current_status}**",
             color=discord.Color.blue()
         )
 
-        # 현재 상태
-        if state == 1:  # 아랫마을 대기
-            status_value = f"**{status_text}**\n⚠️ {seconds_left}초 후 출발! ({direction})"
-        elif state == 3:  # 루디브리엄 대기
-            status_value = f"**{status_text}**\n⚠️ {seconds_left}초 후 출발! ({direction})"
-        elif state == 2:  # 위로 운행중
-            status_value = f"**{status_text}**\n{seconds_left}초 후 루디브리엄 도착"
-        else:  # 아래로 운행중
-            status_value = f"**{status_text}**\n{seconds_left}초 후 아랫마을 도착"
-
-        embed.add_field(name="📍 현재 상태", value=status_value, inline=False)
-
-        # 아랫마을 → 루디브리엄
-        up_times = self._get_next_boarding_times(now, going_up=True, count=3)
-        up_text = ""
-
-        if state == 1:  # 지금 탑승 가능
-            up_text = f"**지금 탑승 가능!** ({seconds_left}초 후 출발)\n"
-            up_text += "다음: " + ", ".join([t.strftime("%H:%M") for t in up_times[1:]])
-        else:
-            first_time = up_times[0]
-            diff = (first_time - now.replace(microsecond=0)).total_seconds()
-            minutes = int(diff // 60)
-            seconds = int(diff % 60)
-            up_text = f"다음 탑승: {first_time.strftime('%H:%M')} ({self._format_time(minutes, seconds)} 후)\n"
-            up_text += "탑승 가능: " + ", ".join([t.strftime("%H:%M") for t in up_times])
-
-        embed.add_field(name="🔼 아랫마을 → 루디브리엄", value=up_text, inline=False)
-
-        # 루디브리엄 → 아랫마을
-        down_times = self._get_next_boarding_times(now, going_up=False, count=3)
-        down_text = ""
-
-        if state == 3:  # 지금 탑승 가능
-            down_text = f"**지금 탑승 가능!** ({seconds_left}초 후 출발)\n"
-            down_text += "다음: " + ", ".join([t.strftime("%H:%M") for t in down_times[1:]])
-        else:
-            first_time = down_times[0]
-            diff = (first_time - now.replace(microsecond=0)).total_seconds()
-            minutes = int(diff // 60)
-            seconds = int(diff % 60)
-            down_text = f"다음 탑승: {first_time.strftime('%H:%M')} ({self._format_time(minutes, seconds)} 후)\n"
-            down_text += "탑승 가능: " + ", ".join([t.strftime("%H:%M") for t in down_times])
-
-        embed.add_field(name="🔽 루디브리엄 → 아랫마을", value=down_text, inline=False)
-
-        # 푸터에 현재 시각
+        embed.add_field(name="", value=layout, inline=False)
         embed.set_footer(text=f"현재 시각: {now.strftime('%H:%M:%S')}")
 
         await ctx.send(embed=embed)
