@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 from bot.config.settings import BOT_COLOR
 import time
+import random
 
 class BasicCommands(commands.Cog):
     def __init__(self, bot):
@@ -44,6 +45,12 @@ class BasicCommands(commands.Cog):
         
         await message.edit(content="", embed=embed)
 
+    @commands.command(name='주사위', aliases=['dice', '굴려'])
+    async def dice_command(self, ctx):
+        """1~100 사이 랜덤 숫자"""
+        result = random.randint(1, 100)
+        await ctx.send(f"🎲 **{ctx.author.display_name}**님이 주사위를 굴려 **{result}**이(가) 나왔습니다!")
+
     @commands.command(name='도움말', aliases=['명령어'])
     async def help_command(self, ctx):
         """사용 가능한 명령어 목록을 표시합니다"""
@@ -56,7 +63,7 @@ class BasicCommands(commands.Cog):
         
         embed.add_field(
             name="🏓 기본 명령어",
-            value="`!핑` - 봇 응답속도 확인\n`!도움말` - 이 메시지 표시",
+            value="`!핑` - 봇 응답속도 확인\n`!주사위` - 1~100 랜덤 숫자\n`!도움말` - 이 메시지 표시",
             inline=False
         )
 
