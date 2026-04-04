@@ -1,6 +1,7 @@
 """아이템 시세 조회 명령어"""
 import discord
 from discord.ext import commands
+import re
 from bot.config.settings import BOT_COLOR
 from bot.utils.mapleland import MaplelandAPI
 
@@ -17,6 +18,24 @@ class PriceCommands(commands.Cog):
         loading_msg = await ctx.send("🔍 아이템을 검색하고 있습니다...")
 
         try:
+            # 필터 파싱 (공N, 합마N)
+            filters = {}
+            filter_text = ""
+
+            # 공격력 필터: 공5, 공 5
+            pad_match = re.match(r'^공\s*(\d+)\s*(.+)$', query)
+            if pad_match:
+                filters["pad"] = int(pad_match.group(1))
+                query = pad_match.group(2).strip()
+                filter_text = f"공격력 {filters['pad']}"
+
+            # 합마 필터: 합마120, 합마 120
+            hapma_match = re.match(r'^합마\s*(\d+)\s*(.+)$', query)
+            if hapma_match:
+                filters["hapma"] = int(hapma_match.group(1))
+                query = hapma_match.group(2).strip()
+                filter_text = f"합마 {filters['hapma']}"
+
             # 아이템 검색
             matches = await self.api.search_item(query)
 
@@ -65,15 +84,19 @@ class PriceCommands(commands.Cog):
             await loading_msg.edit(content=f"🔍 '{item_name}' 시세를 조회하고 있습니다...")
 
             # 가격 정보 조회
-            price_info = await self.api.get_price_summary(item_code, item_name)
+            price_info = await self.api.get_price_summary(item_code, item_name, filters if filters else None)
 
             if "error" in price_info:
                 await loading_msg.edit(content=f"❌ {price_info['error']}")
                 return
 
             # 결과 임베드 생성
+            title = f"💰 {item_name}"
+            if filter_text:
+                title += f" ({filter_text})"
+
             embed = discord.Embed(
-                title=f"💰 {item_name}",
+                title=title,
                 color=BOT_COLOR,
                 timestamp=ctx.message.created_at
             )

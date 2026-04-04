@@ -70,8 +70,8 @@ class MaplelandAPI:
 
         return matches
 
-    async def get_trades(self, item_code: int) -> List[Dict]:
-        """특정 아이템의 거래 목록 가져오기"""
+    async def get_trades(self, item_code: int, filters: Dict = None) -> List[Dict]:
+        """특정 아이템의 거래 목록 가져오기 (필터 적용)"""
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"{TRADE_API}?itemCode={item_code}",
@@ -79,12 +79,35 @@ class MaplelandAPI:
                 timeout=10
             ) as response:
                 if response.status == 200:
-                    return await response.json()
+                    trades = await response.json()
+
+                    # 필터 적용
+                    if filters:
+                        filtered = []
+                        for t in trades:
+                            item_opt = t.get("itemOption", {})
+
+                            # 공격력 필터
+                            if "pad" in filters:
+                                pad = item_opt.get("incPAD", 0)
+                                if pad != filters["pad"]:
+                                    continue
+
+                            # 합마 필터
+                            if "hapma" in filters:
+                                hapma = item_opt.get("hapma", 0)
+                                if hapma != filters["hapma"]:
+                                    continue
+
+                            filtered.append(t)
+                        return filtered
+
+                    return trades
                 return []
 
-    async def get_price_summary(self, item_code: int, item_name: str) -> Dict:
+    async def get_price_summary(self, item_code: int, item_name: str, filters: Dict = None) -> Dict:
         """아이템 가격 요약 (팝니다 최저가 3개, 삽니다 최고가 3개)"""
-        trades = await self.get_trades(item_code)
+        trades = await self.get_trades(item_code, filters)
 
         if not trades:
             return {"error": "거래 정보가 없습니다."}
