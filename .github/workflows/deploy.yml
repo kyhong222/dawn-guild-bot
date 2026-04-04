@@ -1,0 +1,47 @@
+name: Deploy to Mac Mini
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # 수동 실행 가능
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.MAC_HOST }}
+          username: ${{ secrets.MAC_USER }}
+          key: ${{ secrets.MAC_SSH_KEY }}
+          port: ${{ secrets.MAC_PORT }}
+          script: |
+            cd /Users/mighty/.openclaw/workspace-mapleland-guild
+
+            # 최신 코드 가져오기
+            git fetch origin main
+            git reset --hard origin/main
+
+            # 의존성 설치
+            pip3 install -r requirements.txt --quiet
+
+            # 기존 봇 종료
+            pkill -f "python3.*run.py" || true
+
+            # 잠시 대기
+            sleep 2
+
+            # 봇 실행 (백그라운드)
+            nohup python3 run.py > ~/dawn-bot.log 2>&1 &
+
+            # 실행 확인
+            sleep 3
+            if pgrep -f "python3.*run.py" > /dev/null; then
+              echo "✅ 봇이 성공적으로 시작되었습니다"
+            else
+              echo "❌ 봇 시작 실패"
+              tail -20 ~/dawn-bot.log
+              exit 1
+            fi
