@@ -45,7 +45,7 @@ class BasicCommands(commands.Cog):
         
         await message.edit(content="", embed=embed)
 
-    @commands.command(name='주사위', aliases=['dice', '굴려'])
+    @commands.command(name='주사위', aliases=['굴려'])
     async def dice_command(self, ctx):
         """1~100 사이 랜덤 숫자"""
         result = random.randint(1, 100)
