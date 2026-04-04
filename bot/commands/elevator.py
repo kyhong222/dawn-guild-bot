@@ -101,19 +101,15 @@ class Elevator(commands.Cog):
             mins, secs = int(diff // 60), int(diff % 60)
             arae_status = f"다음 탑승: {self._format_time(mins, secs)} 후"
 
-        # 시각적 상태 표시
+        # 현재 상태 텍스트
         if state == 1:
-            visual = "🏢 루디\n　　⬇️\n　🛗 **아랫마을 대기**\n　　⬆️\n🏠 아랫마을"
-            status_text = f"아랫마을에서 탑승 가능! **{seconds_left}초 후 출발**"
+            status_text = f"아랫마을 대기 | {seconds_left}초 후 출발"
         elif state == 2:
-            visual = "🏢 루디\n　　⬇️\n　🛗 **⬆️ 상승중**\n　　⬆️\n🏠 아랫마을"
-            status_text = f"**{seconds_left}초 후** 루디브리엄 도착"
+            status_text = f"루디브리엄으로 상승중 | {seconds_left}초 후 도착"
         elif state == 3:
-            visual = "🏢 루디\n　　⬇️\n　🛗 **루디 대기**\n　　⬆️\n🏠 아랫마을"
-            status_text = f"루디브리엄에서 탑승 가능! **{seconds_left}초 후 출발**"
+            status_text = f"루디브리엄 대기 | {seconds_left}초 후 출발"
         else:
-            visual = "🏢 루디\n　　⬇️\n　🛗 **⬇️ 하강중**\n　　⬆️\n🏠 아랫마을"
-            status_text = f"**{seconds_left}초 후** 아랫마을 도착"
+            status_text = f"아랫마을로 하강중 | {seconds_left}초 후 도착"
 
         # 탑승 시간 문자열
         down_times_str = ", ".join([t.strftime("%H:%M") for t in down_times])
@@ -122,7 +118,6 @@ class Elevator(commands.Cog):
         # 임베드 생성
         embed = discord.Embed(
             title="🛗 엘레베이터 시간표",
-            description=visual,
             color=discord.Color.blue()
         )
 
@@ -130,17 +125,17 @@ class Elevator(commands.Cog):
 
         # 루디 → 아랫마을
         if state == 3:
-            down_value = f"**지금 탑승!** ({seconds_left}초 후 출발)\n다음: {', '.join([t.strftime('%H:%M') for t in down_times[1:]])}"
+            down_value = f"**지금 탑승 가능!** ({seconds_left}초 후 출발)\n다음: {', '.join([t.strftime('%H:%M') for t in down_times[1:]])}"
         else:
             down_value = f"{ludi_status}\n탑승 가능: {down_times_str}"
-        embed.add_field(name="🔽 루디 → 아랫마을", value=down_value, inline=True)
+        embed.add_field(name="🔽 루디브리엄 → 아랫마을", value=down_value, inline=False)
 
         # 아랫마을 → 루디
         if state == 1:
-            up_value = f"**지금 탑승!** ({seconds_left}초 후 출발)\n다음: {', '.join([t.strftime('%H:%M') for t in up_times[1:]])}"
+            up_value = f"**지금 탑승 가능!** ({seconds_left}초 후 출발)\n다음: {', '.join([t.strftime('%H:%M') for t in up_times[1:]])}"
         else:
             up_value = f"{arae_status}\n탑승 가능: {up_times_str}"
-        embed.add_field(name="🔼 아랫마을 → 루디", value=up_value, inline=True)
+        embed.add_field(name="🔼 아랫마을 → 루디브리엄", value=up_value, inline=False)
 
         embed.set_footer(text=f"현재 시각: {now.strftime('%H:%M:%S')}")
 
