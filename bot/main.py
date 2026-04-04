@@ -51,9 +51,14 @@ async def on_message(message):
         logger.warning(f"⚠️ 중복 메시지 처리 시도 무시: {message.id}")
         return
     
-    # 허용된 채널 체크 (설정에서 비어있으면 모든 채널 허용)
-    if ALLOWED_CHANNELS and str(message.channel.id) not in ALLOWED_CHANNELS:
-        return
+    # 서버별 허용 채널 체크
+    if message.guild and ALLOWED_CHANNELS:
+        guild_id = message.guild.id
+        if guild_id in ALLOWED_CHANNELS:
+            # 해당 서버에 설정이 있으면 허용된 채널만 통과
+            if message.channel.id not in ALLOWED_CHANNELS[guild_id]:
+                return
+        # 서버 설정이 없으면 모든 채널 허용
     
     # 명령어인 경우 로깅 및 캐시 추가
     if message.content.startswith(COMMAND_PREFIX):
