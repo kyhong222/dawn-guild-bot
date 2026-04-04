@@ -33,17 +33,45 @@ class MashopAPI:
                     return self._map_cache
                 return []
 
+    def _match_abbreviation(self, query: str, map_name: str) -> bool:
+        """줄임말 매칭 (블와둥 → 블루 와이번의 둥지)"""
+        # 맵 이름에서 단어 추출 (: 와 공백으로 분리)
+        words = []
+        for part in map_name.replace(":", " ").split():
+            words.append(part)
+
+        # 쿼리의 각 글자가 순서대로 단어 시작과 매칭되는지 확인
+        query_chars = list(query)
+        word_idx = 0
+
+        for char in query_chars:
+            found = False
+            while word_idx < len(words):
+                if words[word_idx].startswith(char):
+                    found = True
+                    word_idx += 1
+                    break
+                word_idx += 1
+            if not found:
+                return False
+
+        return True
+
     async def search_map(self, query: str) -> List[str]:
-        """맵 이름 검색 (like 검색)"""
+        """맵 이름 검색 (like 검색 + 줄임말 검색)"""
         all_maps = await self.get_all_maps()
         query_lower = query.lower().replace(" ", "")
 
         matches = []
         for map_info in all_maps:
             map_name = map_info.get("mapName", "")
-            # 공백 제거하고 비교
             map_name_normalized = map_name.lower().replace(" ", "")
+
+            # 1. 단순 포함 검색
             if query_lower in map_name_normalized:
+                matches.append(map_name)
+            # 2. 줄임말 매칭
+            elif self._match_abbreviation(query, map_name):
                 matches.append(map_name)
 
         return matches
