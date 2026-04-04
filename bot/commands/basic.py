@@ -73,6 +73,12 @@ class BasicCommands(commands.Cog):
             inline=False
         )
 
+        embed.add_field(
+            name="📊 아이템 시세",
+            value="`!시세 아이템이름` - 메랜지지 시세 조회\n예시: `!시세 파워엘릭서`",
+            inline=False
+        )
+
         embed.set_footer(text="메랜샵 데이터 기반")
         
         await ctx.send(embed=embed)
