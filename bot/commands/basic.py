@@ -59,8 +59,14 @@ class BasicCommands(commands.Cog):
             value="`!핑` - 봇 응답속도 확인\n`!도움말` - 이 메시지 표시",
             inline=False
         )
-        
-        embed.set_footer(text="더 많은 기능이 곧 추가될 예정입니다!")
+
+        embed.add_field(
+            name="💰 자리값 조회",
+            value="`!자리값 맵이름` - 메랜샵 자리값 조회\n예시: `!자리값 블와둥`",
+            inline=False
+        )
+
+        embed.set_footer(text="메랜샵 데이터 기반")
         
         await ctx.send(embed=embed)
 
