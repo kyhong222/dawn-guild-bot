@@ -83,7 +83,7 @@ class MaplelandAPI:
                 return []
 
     async def get_price_summary(self, item_code: int, item_name: str) -> Dict:
-        """아이템 가격 요약 (팝니다 최저가, 삽니다 최고가)"""
+        """아이템 가격 요약 (팝니다 최저가 3개, 삽니다 최고가 3개)"""
         trades = await self.get_trades(item_code)
 
         if not trades:
@@ -96,27 +96,25 @@ class MaplelandAPI:
         sells = [t for t in active_trades if t.get("tradeType") == "sell"]
         buys = [t for t in active_trades if t.get("tradeType") == "buy"]
 
-        # 팝니다 최저가
-        sell_min = None
-        sell_min_item = None
-        if sells:
-            sell_min_item = min(sells, key=lambda x: x.get("itemPrice", float('inf')))
-            sell_min = sell_min_item.get("itemPrice", 0)
+        # 팝니다 최저가순 정렬, 상위 3개
+        sells_sorted = sorted(sells, key=lambda x: x.get("itemPrice", float('inf')))[:3]
+        sell_items = [
+            {"price": t.get("itemPrice", 0), "comment": t.get("comment", "")}
+            for t in sells_sorted
+        ]
 
-        # 삽니다 최고가
-        buy_max = None
-        buy_max_item = None
-        if buys:
-            buy_max_item = max(buys, key=lambda x: x.get("itemPrice", 0))
-            buy_max = buy_max_item.get("itemPrice", 0)
+        # 삽니다 최고가순 정렬, 상위 3개
+        buys_sorted = sorted(buys, key=lambda x: x.get("itemPrice", 0), reverse=True)[:3]
+        buy_items = [
+            {"price": t.get("itemPrice", 0), "comment": t.get("comment", "")}
+            for t in buys_sorted
+        ]
 
         return {
             "item_code": item_code,
             "item_name": item_name,
-            "sell_min": sell_min,
-            "sell_comment": sell_min_item.get("comment", "") if sell_min_item else "",
+            "sell_items": sell_items,
             "sell_count": len(sells),
-            "buy_max": buy_max,
-            "buy_comment": buy_max_item.get("comment", "") if buy_max_item else "",
+            "buy_items": buy_items,
             "buy_count": len(buys),
         }

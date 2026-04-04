@@ -62,24 +62,24 @@ class BasicCommands(commands.Cog):
         )
         
         embed.add_field(
-            name="🏓 기본 명령어",
-            value="`!핑` - 봇 응답속도 확인\n`!주사위` - 1~100 랜덤 숫자\n`!도움말` - 이 메시지 표시",
+            name="🎲 !주사위, !굴려",
+            value="1~100 사이 랜덤 숫자를 뽑습니다.",
             inline=False
         )
 
         embed.add_field(
-            name="💰 자리값 조회",
-            value="`!자리값 맵이름` - 메랜샵 자리값 조회\n예시: `!자리값 블와둥`",
+            name="💰 !자리, !자리값",
+            value="메랜샵에서 자리값을 검색합니다.\n예시: `!자리 남둥`",
             inline=False
         )
 
         embed.add_field(
-            name="📊 아이템 시세",
-            value="`!시세 아이템이름` - 메랜지지 시세 조회\n예시: `!시세 파워엘릭서`",
+            name="📊 !시세, !가격",
+            value="메랜지지에서 매물의 가격을 검색합니다.\n예시: `!가격 파엘`",
             inline=False
         )
 
-        embed.set_footer(text="메랜샵 데이터 기반")
+        embed.set_footer(text="새벽길드봇")
         
         await ctx.send(embed=embed)
 

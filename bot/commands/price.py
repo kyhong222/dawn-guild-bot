@@ -67,11 +67,15 @@ class PriceCommands(commands.Cog):
                 timestamp=ctx.message.created_at
             )
 
-            # 팝니다 최저가
-            if price_info["sell_min"] is not None:
-                sell_text = f"**{price_info['sell_min']:,}** 메소"
-                if price_info["sell_comment"]:
-                    sell_text += f"\n> {price_info['sell_comment']}"
+            # 팝니다 최저가 3개
+            if price_info["sell_items"]:
+                sell_lines = []
+                for item in price_info["sell_items"]:
+                    line = f"• **{item['price']:,}** 메소"
+                    if item['comment']:
+                        line += f" - {item['comment']}"
+                    sell_lines.append(line)
+                sell_text = "\n".join(sell_lines)
                 embed.add_field(
                     name=f"📤 팝니다 최저가 ({price_info['sell_count']}개 매물)",
                     value=sell_text,
@@ -84,11 +88,15 @@ class PriceCommands(commands.Cog):
                     inline=False
                 )
 
-            # 삽니다 최고가
-            if price_info["buy_max"] is not None:
-                buy_text = f"**{price_info['buy_max']:,}** 메소"
-                if price_info["buy_comment"]:
-                    buy_text += f"\n> {price_info['buy_comment']}"
+            # 삽니다 최고가 3개
+            if price_info["buy_items"]:
+                buy_lines = []
+                for item in price_info["buy_items"]:
+                    line = f"• **{item['price']:,}** 메소"
+                    if item['comment']:
+                        line += f" - {item['comment']}"
+                    buy_lines.append(line)
+                buy_text = "\n".join(buy_lines)
                 embed.add_field(
                     name=f"📥 삽니다 최고가 ({price_info['buy_count']}개 매물)",
                     value=buy_text,
