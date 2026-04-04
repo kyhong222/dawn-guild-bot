@@ -25,26 +25,37 @@ class PriceCommands(commands.Cog):
                 return
 
             if len(matches) > 1:
-                # 후보가 여러 개
-                embed = discord.Embed(
-                    title=f"🔍 {len(matches)}개의 유사한 아이템이 있습니다",
-                    description="좀 더 정확한 검색어를 입력해주세요.",
-                    color=BOT_COLOR
-                )
+                # 정확히 일치하는 아이템이 있으면 선택
+                exact_match = None
+                query_normalized = query.lower().replace(" ", "")
+                for item in matches:
+                    if item["itemName"].lower().replace(" ", "") == query_normalized:
+                        exact_match = item
+                        break
 
-                # 최대 10개까지 표시
-                item_list = "\n".join([f"• {item['itemName']}" for item in matches[:10]])
-                if len(matches) > 10:
-                    item_list += f"\n... 외 {len(matches) - 10}개"
+                if exact_match:
+                    matches = [exact_match]
+                else:
+                    # 후보가 여러 개
+                    embed = discord.Embed(
+                        title=f"🔍 {len(matches)}개의 유사한 아이템이 있습니다",
+                        description="좀 더 정확한 검색어를 입력해주세요.",
+                        color=BOT_COLOR
+                    )
 
-                embed.add_field(
-                    name="검색 결과",
-                    value=item_list,
-                    inline=False
-                )
+                    # 최대 10개까지 표시
+                    item_list = "\n".join([f"• {item['itemName']}" for item in matches[:10]])
+                    if len(matches) > 10:
+                        item_list += f"\n... 외 {len(matches) - 10}개"
 
-                await loading_msg.edit(content="", embed=embed)
-                return
+                    embed.add_field(
+                        name="검색 결과",
+                        value=item_list,
+                        inline=False
+                    )
+
+                    await loading_msg.edit(content="", embed=embed)
+                    return
 
             # 아이템이 하나만 매칭됨
             item = matches[0]
