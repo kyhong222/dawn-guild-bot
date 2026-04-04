@@ -3,7 +3,7 @@
 """
 import discord
 from discord.ext import commands
-from bot.config.settings import BOT_COLOR, GUILD_INFO
+from bot.config.settings import BOT_COLOR
 import time
 
 class BasicCommands(commands.Cog):
@@ -44,39 +44,6 @@ class BasicCommands(commands.Cog):
         
         await message.edit(content="", embed=embed)
 
-    @commands.command(name='길드', aliases=['guild'])
-    async def guild_command(self, ctx):
-        """새벽 길드 정보를 표시합니다"""
-        embed = discord.Embed(
-            title=f"🌅 메이플랜드 {GUILD_INFO['name']} 길드",
-            description=GUILD_INFO['description'],
-            color=BOT_COLOR,
-            timestamp=ctx.message.created_at
-        )
-        
-        embed.add_field(
-            name="🎮 게임", 
-            value=GUILD_INFO['game'], 
-            inline=True
-        )
-        embed.add_field(
-            name="⏰ 활동시간", 
-            value=GUILD_INFO['activity_time'], 
-            inline=True
-        )
-        embed.add_field(
-            name="👥 디스코드 멤버", 
-            value=f"{ctx.guild.member_count}명", 
-            inline=True
-        )
-        
-        embed.set_footer(text="새벽 길드봇")
-        
-        if ctx.guild.icon:
-            embed.set_thumbnail(url=ctx.guild.icon.url)
-            
-        await ctx.send(embed=embed)
-
     @commands.command(name='도움말', aliases=['명령어'])
     async def help_command(self, ctx):
         """사용 가능한 명령어 목록을 표시합니다"""
@@ -89,19 +56,7 @@ class BasicCommands(commands.Cog):
         
         embed.add_field(
             name="🏓 기본 명령어",
-            value="`!핑` - 봇 응답속도 확인\n`!길드` - 길드 정보 표시",
-            inline=False
-        )
-        
-        embed.add_field(
-            name="📊 자리값 조회",
-            value="`!자리값 맵이름` - 메랜샵 자리값 확인\n`!인기맵` - 핫한 자리 맵 TOP 10\n`!자리값도움말` - 자리값 명령어 도움말",
-            inline=False
-        )
-        
-        embed.add_field(
-            name="ℹ️ 도움말",
-            value="`!도움말` - 이 메시지 표시",
+            value="`!핑` - 봇 응답속도 확인\n`!도움말` - 이 메시지 표시",
             inline=False
         )
         
