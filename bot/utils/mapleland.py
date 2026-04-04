@@ -73,6 +73,10 @@ class MaplelandAPI:
     async def search_item(self, query: str) -> List[Dict]:
         """아이템 이름 검색 (like 검색 + 줄임말 검색)"""
         all_items = await self.get_all_items()
+
+        # 숫자+퍼 → 숫자+% 치환
+        query = re.sub(r'(\d+)퍼', r'\1%', query)
+
         query_lower = query.lower().replace(" ", "")
 
         matches = []
