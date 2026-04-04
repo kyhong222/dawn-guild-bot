@@ -1,5 +1,6 @@
 """메랜지지 API 유틸리티"""
 import aiohttp
+import re
 from typing import Optional, List, Dict
 
 ITEMS_API = "https://mapleland.gg/api/items"
@@ -32,16 +33,33 @@ class MaplelandAPI:
                     return self._item_cache
                 return []
 
+    def _tokenize_query(self, query: str) -> List[str]:
+        """쿼리를 토큰으로 분리 (숫자+%는 하나의 토큰)"""
+        tokens = []
+        i = 0
+        while i < len(query):
+            # 숫자로 시작하면 연속된 숫자+% 묶음
+            if query[i].isdigit():
+                j = i
+                while j < len(query) and (query[j].isdigit() or query[j] == '%'):
+                    j += 1
+                tokens.append(query[i:j])
+                i = j
+            else:
+                tokens.append(query[i])
+                i += 1
+        return tokens
+
     def _match_abbreviation(self, query: str, item_name: str) -> bool:
-        """줄임말 매칭 (파엘 → 파워 엘릭서)"""
+        """줄임말 매칭 (파엘 → 파워 엘릭서, 신점10 → 신발 점프력 주문서 10%)"""
         words = item_name.replace(":", " ").split()
-        query_chars = list(query)
+        query_tokens = self._tokenize_query(query)
         word_idx = 0
 
-        for char in query_chars:
+        for token in query_tokens:
             found = False
             while word_idx < len(words):
-                if words[word_idx].startswith(char):
+                if words[word_idx].startswith(token):
                     found = True
                     word_idx += 1
                     break
