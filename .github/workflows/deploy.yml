@@ -28,7 +28,7 @@ jobs:
             pip3 install -r requirements.txt --quiet
 
             # 기존 봇 종료
-            pkill -f "python3.*run.py" || true
+            pkill -f "run.py" || true
 
             # 잠시 대기
             sleep 2
@@ -38,7 +38,7 @@ jobs:
 
             # 실행 확인
             sleep 3
-            if pgrep -f "python3.*run.py" > /dev/null; then
+            if pgrep -f "run.py" > /dev/null; then
               echo "✅ 봇이 성공적으로 시작되었습니다"
             else
               echo "❌ 봇 시작 실패"
