@@ -33,6 +33,10 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
+# Python
+__pycache__/
+*.pyc
+
 # macOS
 .DS_Store
 

@@ -85,6 +85,12 @@ class BasicCommands(commands.Cog):
             inline=False
         )
 
+        embed.add_field(
+            name="⛵ !배",
+            value="배 시간표를 확인합니다.",
+            inline=False
+        )
+
         embed.set_footer(text="새벽길드봇")
         
         await ctx.send(embed=embed)
