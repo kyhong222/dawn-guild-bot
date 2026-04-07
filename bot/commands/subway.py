@@ -89,8 +89,7 @@ class Subway(commands.Cog):
         status, detail = self._status(now)
 
         embed = discord.Embed(
-            title="🚇 지하철 시간표",
-            description="10분 주기 · 5분 전 탑승 · 1분 전 마감 · 운행 1분",
+            title="🚇 지하철 시간표 (커닝시티 ↔ 뉴리프시티)",
             color=discord.Color.dark_blue()
         )
 
