@@ -101,9 +101,11 @@ class Megaphone(commands.Cog):
         self.messages.append((ts, item))
 
     def _recent(self):
-        """1시간 이내 메시지, 최신순"""
+        """1시간 이내 메시지, 최신순 정렬"""
         cutoff = datetime.now() - BUFFER_WINDOW
-        return [m for m in reversed(self.messages) if m[0] >= cutoff]
+        recent = [m for m in self.messages if m[0] >= cutoff]
+        recent.sort(key=lambda x: x[0], reverse=True)
+        return recent
 
     def _format_results(self, matches, keywords):
         if not matches:
