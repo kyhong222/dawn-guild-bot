@@ -4,6 +4,7 @@ import logging
 import re
 from collections import deque
 from datetime import datetime, timedelta
+from typing import Optional
 
 import aiohttp
 import discord
@@ -23,9 +24,9 @@ class Megaphone(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.messages: deque = deque(maxlen=MAX_BUFFER)
-        self._task: asyncio.Task | None = None
-        self._session: aiohttp.ClientSession | None = None
+        self.messages = deque(maxlen=MAX_BUFFER)
+        self._task = None
+        self._session = None
 
     async def cog_load(self):
         self._task = asyncio.create_task(self._ws_loop())
@@ -36,7 +37,7 @@ class Megaphone(commands.Cog):
         if self._session:
             await self._session.close()
 
-    async def _fetch_token(self) -> str | None:
+    async def _fetch_token(self) -> Optional[str]:
         """세션 토큰 발급"""
         try:
             async with self._session.get(SESSION_URL) as r:
@@ -99,14 +100,12 @@ class Megaphone(commands.Cog):
             ts = datetime.now()
         self.messages.append((ts, item))
 
-    def _recent(self) -> list[tuple[datetime, dict]]:
+    def _recent(self):
         """1시간 이내 메시지, 최신순"""
         cutoff = datetime.now() - BUFFER_WINDOW
         return [m for m in reversed(self.messages) if m[0] >= cutoff]
 
-    def _format_results(
-        self, matches: list[tuple[datetime, dict]], keywords: list[str]
-    ) -> str:
+    def _format_results(self, matches, keywords):
         if not matches:
             return "_1시간 이내 매칭되는 확성기가 없습니다._"
 
@@ -124,13 +123,7 @@ class Megaphone(commands.Cog):
             lines.append(f"`{time_str}` **{name}**: {content}")
         return "\n".join(lines)
 
-    async def _send_embed(
-        self,
-        ctx,
-        title: str,
-        matches: list[tuple[datetime, dict]],
-        keywords: list[str],
-    ):
+    async def _send_embed(self, ctx, title, matches, keywords):
         desc = self._format_results(matches, keywords)
         total = len(matches)
         embed = discord.Embed(
@@ -143,7 +136,7 @@ class Megaphone(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(name="고확")
-    async def high_search(self, ctx, *, keyword: str = None):
+    async def high_search(self, ctx, *, keyword=None):
         """확성기 키워드 검색 (공백으로 여러 단어 AND)"""
         if not keyword:
             await ctx.send("❌ 검색어를 입력해주세요. 예: `!고확 파엘`")
