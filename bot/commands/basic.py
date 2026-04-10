@@ -97,6 +97,12 @@ class BasicCommands(commands.Cog):
             inline=False
         )
 
+        embed.add_field(
+            name="📢 !고확, !마뇽, !월코",
+            value="실시간 확성기 검색 (최근 1시간).\n예시: `!고확 파엘`",
+            inline=False
+        )
+
         embed.set_footer(text="새벽길드봇")
         
         await ctx.send(embed=embed)
