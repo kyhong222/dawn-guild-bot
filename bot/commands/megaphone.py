@@ -127,6 +127,7 @@ class Megaphone(commands.Cog):
 
     async def _send_embed(self, ctx, title, matches, keywords):
         desc = self._format_results(matches, keywords)
+        desc += "\n\n[📢 메가폰랜드 바로가기](https://megaphoneland.com)"
         total = len(matches)
         embed = discord.Embed(
             title=title,
