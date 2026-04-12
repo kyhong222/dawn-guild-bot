@@ -40,6 +40,13 @@ class PriceCommands(commands.Cog):
             matches = await self.api.search_item(query)
 
             if not matches:
+                # 아이템을 찾지 못하면 자리값(맵) 검색으로 fallback
+                jari_cog = self.bot.get_cog('JariCommands')
+                if jari_cog:
+                    await loading_msg.edit(content="🔍 아이템을 찾지 못해 자리값(맵)을 검색합니다...")
+                    await loading_msg.delete()
+                    await ctx.invoke(jari_cog.jari_command, query=query)
+                    return
                 await loading_msg.edit(content=f"❌ '{query}'와 일치하는 아이템을 찾을 수 없습니다.")
                 return
 
