@@ -254,6 +254,11 @@ class PianusCommands(commands.Cog):
             inline=False,
         )
         embed.add_field(
+            name="↩️ !붕어취소",
+            value="마지막 클리어 기록을 취소합니다. (오입력 시 사용)",
+            inline=False,
+        )
+        embed.add_field(
             name="🔍 !붕어확인, !붕어",
             value="현재 상태와 다음 도전 가능 시각을 확인합니다.",
             inline=False,
@@ -337,6 +342,31 @@ class PianusCommands(commands.Cog):
 
         # 알람 스케줄러 갱신
         self._schedule_next_alarm()
+
+    @commands.command(name='붕어취소')
+    async def pianus_cancel(self, ctx):
+        """마지막 붕어완료 기록 취소"""
+        record = await self.db.get_record(ctx.author.id)
+        if not record:
+            await ctx.send("ℹ️ 취소할 클리어 기록이 없습니다.")
+            return
+
+        clear_kst = record["last_clear_time"].astimezone(KST)
+        deleted = await self.db.delete_record(ctx.author.id)
+
+        if deleted:
+            embed = discord.Embed(
+                title="🐟 붕어 기록 취소 완료",
+                description=(
+                    f"**{clear_kst.strftime('%m/%d(%a) %H:%M')}** 클리어 기록이 삭제되었습니다.\n"
+                    "알람 설정은 유지되며, 다음 `!붕어완료` 시 자동으로 재계산됩니다."
+                ),
+                color=BOT_COLOR,
+            )
+            await ctx.send(embed=embed)
+
+            # 알람 스케줄러 갱신 (기록 없으니 알람 안 울림)
+            self._schedule_next_alarm()
 
     @commands.command(name='붕어확인', aliases=['붕어'])
     async def pianus_check(self, ctx):

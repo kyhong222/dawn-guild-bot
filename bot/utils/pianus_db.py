@@ -148,6 +148,16 @@ class PianusDB:
 
         return alarm_time
 
+    async def delete_record(self, user_id: int) -> bool:
+        """유저의 붕어 클리어 기록 삭제. 삭제된 행이 있으면 True"""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "DELETE FROM pianus_records WHERE discord_user_id = ?",
+                (user_id,)
+            )
+            await db.commit()
+            return cursor.rowcount > 0
+
     async def remove_alarms(self, user_id: int):
         """유저의 모든 알람 해제"""
         async with aiosqlite.connect(self.db_path) as db:
