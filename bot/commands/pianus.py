@@ -269,8 +269,13 @@ class PianusCommands(commands.Cog):
             inline=False,
         )
         embed.add_field(
-            name="🔕 !붕어알람해제",
-            value="설정된 모든 알람을 해제합니다.",
+            name="📋 !붕어알람목록",
+            value="등록된 알람과 다음 발송 예정 시각을 확인합니다.",
+            inline=False,
+        )
+        embed.add_field(
+            name="🔕 !붕어알람삭제, !붕어알람취소",
+            value="설정된 모든 알람을 삭제합니다.",
             inline=False,
         )
 
@@ -482,9 +487,35 @@ class PianusCommands(commands.Cog):
         # 알람 스케줄러 갱신
         self._schedule_next_alarm()
 
-    @commands.command(name='붕어알람해제')
+    @commands.command(name='붕어알람목록')
+    async def pianus_alarm_list(self, ctx):
+        """등록된 알람 목록 확인"""
+        alarms = await self.db.get_alarms(ctx.author.id)
+        if not alarms:
+            await ctx.send("ℹ️ 설정된 알람이 없습니다. `!붕어알람설정`으로 추가하세요.")
+            return
+
+        embed = discord.Embed(
+            title=f"🔔 {ctx.author.display_name}님의 붕어 알람 목록",
+            color=BOT_COLOR,
+        )
+
+        for a in alarms:
+            desc = format_alarm_description(a["alarm_type"], a["alarm_value"])
+            alarm_time = datetime.fromisoformat(a["alarm_time"]).astimezone(KST)
+            sent = "✅ 발송 완료" if a["alarm_sent"] else f"⏳ {alarm_time.strftime('%m/%d(%a) %H:%M')} 예정"
+            embed.add_field(
+                name=f"🔹 {desc}",
+                value=sent,
+                inline=False,
+            )
+
+        embed.set_footer(text="알람은 DM으로 발송됩니다")
+        await ctx.send(embed=embed)
+
+    @commands.command(name='붕어알람삭제', aliases=['붕어알람취소'])
     async def pianus_alarm_remove(self, ctx):
-        """모든 알람 해제"""
+        """모든 알람 삭제"""
         alarms = await self.db.get_alarms(ctx.author.id)
         if not alarms:
             await ctx.send("ℹ️ 설정된 알람이 없습니다.")
@@ -493,8 +524,8 @@ class PianusCommands(commands.Cog):
         await self.db.remove_alarms(ctx.author.id)
 
         embed = discord.Embed(
-            title="🔕 붕어 알람 해제 완료",
-            description=f"{len(alarms)}개의 알람이 해제되었습니다.",
+            title="🔕 붕어 알람 삭제 완료",
+            description=f"{len(alarms)}개의 알람이 삭제되었습니다.",
             color=BOT_COLOR,
         )
         await ctx.send(embed=embed)
