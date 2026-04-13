@@ -103,8 +103,14 @@ class BasicCommands(commands.Cog):
             inline=False
         )
 
+        embed.add_field(
+            name="🐟 !붕어도움말, !붕어도움",
+            value="붕어(피아누스) 알람 관련 명령어 안내.",
+            inline=False
+        )
+
         embed.set_footer(text="새벽길드봇")
-        
+
         await ctx.send(embed=embed)
 
 async def setup(bot):
