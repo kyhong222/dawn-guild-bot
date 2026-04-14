@@ -213,6 +213,50 @@ class PianusCommands(commands.Cog):
 
     # ─── 명령어 ───
 
+    @commands.command(name='붕어도움', aliases=['붕어도움말'])
+    async def pianus_help(self, ctx):
+        """붕어(피아누스) 관련 명령어 안내"""
+        embed = discord.Embed(
+            title="🐟 붕어(피아누스) 명령어 안내",
+            description=f"피아누스는 {PIANUS_COOLDOWN_DAYS}일 쿨타임 보스입니다.",
+            color=BOT_COLOR,
+        )
+        embed.add_field(
+            name="📝 !붕어",
+            value=(
+                "클리어 기록 및 현황 확인.\n"
+                "• `!붕어` — 기록 없거나 7일 지남 → 현재시각 기록\n"
+                "• `!붕어` — 7일 이내 → 남은 시간 확인\n"
+                "• `!붕어 21:00` — 오늘 21시로 기록\n"
+                "• `!붕어 04/13 21:00` — 특정일로 기록"
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="↩️ !붕어취소",
+            value=(
+                "클리어 기록을 삭제합니다.\n"
+                "시간을 잘못 기록했다면 `!붕어 MM/DD HH:MM`으로 덮어쓸 수도 있습니다."
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="🔔 !붕어알람, !붕어알림",
+            value=(
+                "DM으로 알람을 받습니다.\n"
+                "• `!붕어알람` — 1시간 전 알람\n"
+                "• `!붕어알람 3시간전` — 3시간 전 알람"
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="🔕 !붕어알람취소",
+            value="등록된 알람을 삭제합니다.",
+            inline=False,
+        )
+        embed.set_footer(text="새벽길드봇")
+        await ctx.send(embed=embed)
+
     @commands.command(name='붕어')
     async def pianus_command(self, ctx, *, time_input: str = None):
         """붕어 기록/확인 (기록 없거나 7일 지남 → 기록, 7일 이내 → 현황)"""
@@ -293,7 +337,8 @@ class PianusCommands(commands.Cog):
             title="🐟 붕어 기록 취소 완료",
             description=(
                 f"**{clear_kst.strftime('%m/%d(%a) %H:%M')}** 클리어 기록이 삭제되었습니다.\n"
-                "다음 `!붕어` 입력 시 새로 기록됩니다."
+                "다음 `!붕어` 입력 시 새로 기록됩니다.\n"
+                "시간 수정만 필요했다면 `!붕어 MM/DD HH:MM`으로 덮어쓸 수도 있어요."
             ),
             color=BOT_COLOR,
         )
