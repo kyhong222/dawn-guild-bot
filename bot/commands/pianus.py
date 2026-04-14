@@ -319,6 +319,12 @@ class PianusCommands(commands.Cog):
                     value=sent_text,
                     inline=False,
                 )
+            else:
+                embed.add_field(
+                    name="🔕 알람 미설정",
+                    value="`!붕어알람`으로 알람을 설정할 수 있습니다.",
+                    inline=False,
+                )
 
             await ctx.send(embed=embed)
 
