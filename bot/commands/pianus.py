@@ -142,54 +142,106 @@ class PianusCommands(commands.Cog):
         # 성공/실패 관계없이 sent 처리
         await self.db.mark_alarm_sent(user_id)
 
+    # ─── 헬퍼 ───
+
+    @staticmethod
+    def _parse_time(text: str):
+        """시간 입력 파싱 (KST 기준). 'MM/DD HH:MM' 또는 'HH:MM'"""
+        text = text.strip()
+        now_kst = datetime.now(KST)
+
+        # MM/DD HH:MM
+        match = re.match(r'^(\d{1,2})/(\d{1,2})\s+(\d{1,2}):(\d{2})$', text)
+        if match:
+            month, day = int(match.group(1)), int(match.group(2))
+            hour, minute = int(match.group(3)), int(match.group(4))
+            try:
+                dt_kst = now_kst.replace(month=month, day=day, hour=hour, minute=minute, second=0, microsecond=0)
+                return dt_kst.astimezone(timezone.utc)
+            except ValueError:
+                return None
+
+        # HH:MM
+        match = re.match(r'^(\d{1,2}):(\d{2})$', text)
+        if match:
+            hour, minute = int(match.group(1)), int(match.group(2))
+            try:
+                dt_kst = now_kst.replace(hour=hour, minute=minute, second=0, microsecond=0)
+                return dt_kst.astimezone(timezone.utc)
+            except ValueError:
+                return None
+
+        return None
+
+    async def _send_clear_result(self, ctx, result: dict):
+        """클리어 기록 결과 임베드 전송"""
+        clear_kst = result["last_clear_time"].astimezone(KST)
+        next_kst = result["next_available_time"].astimezone(KST)
+
+        embed = discord.Embed(
+            title="🐟 붕어 클리어 기록 완료!",
+            color=BOT_COLOR,
+        )
+        embed.add_field(
+            name="🕐 클리어 시각",
+            value=clear_kst.strftime("%m/%d(%a) %H:%M KST"),
+            inline=True,
+        )
+        embed.add_field(
+            name="⏰ 다음 도전 가능",
+            value=next_kst.strftime("%m/%d(%a) %H:%M KST"),
+            inline=True,
+        )
+
+        alarm = await self.db.get_alarm(ctx.author.id)
+        if alarm:
+            embed.add_field(
+                name="🔔 알람",
+                value=f"{alarm['hours_before']}시간 전 알람 재설정됨",
+                inline=False,
+            )
+        else:
+            embed.add_field(
+                name="🔔 알람",
+                value="`!붕어알람`으로 알람을 설정할 수 있습니다.",
+                inline=False,
+            )
+
+        embed.set_footer(text=f"요청자: {ctx.author.display_name}")
+        await ctx.send(embed=embed)
+        self._schedule_next_alarm()
+
     # ─── 명령어 ───
 
     @commands.command(name='붕어')
-    async def pianus_command(self, ctx):
+    async def pianus_command(self, ctx, *, time_input: str = None):
         """붕어 기록/확인 (기록 없거나 7일 지남 → 기록, 7일 이내 → 현황)"""
         record = await self.db.get_record(ctx.author.id)
         now = datetime.now(timezone.utc)
 
+        # 특정 시각 입력 시 → 무조건 기록 (덮어쓰기)
+        if time_input:
+            clear_time = self._parse_time(time_input)
+            if not clear_time:
+                embed = discord.Embed(
+                    title="❌ 시간 형식 오류",
+                    description=(
+                        "올바른 형식으로 입력해주세요.\n\n"
+                        "• `!붕어` — 지금 시각 기준\n"
+                        "• `!붕어 21:00` — 오늘 21시\n"
+                        "• `!붕어 04/13 21:00` — 4월 13일 21시"
+                    ),
+                    color=0xFF3333,
+                )
+                await ctx.send(embed=embed)
+                return
+            result = await self.db.record_clear(ctx.author.id, clear_time)
+            return await self._send_clear_result(ctx, result)
+
         # 기록이 없거나 7일 지났으면 → 현재 시각 기록
         if not record or now >= record["next_available_time"]:
             result = await self.db.record_clear(ctx.author.id, now)
-
-            clear_kst = result["last_clear_time"].astimezone(KST)
-            next_kst = result["next_available_time"].astimezone(KST)
-
-            embed = discord.Embed(
-                title="🐟 붕어 클리어 기록 완료!",
-                color=BOT_COLOR,
-            )
-            embed.add_field(
-                name="🕐 클리어 시각",
-                value=clear_kst.strftime("%m/%d(%a) %H:%M KST"),
-                inline=True,
-            )
-            embed.add_field(
-                name="⏰ 다음 도전 가능",
-                value=next_kst.strftime("%m/%d(%a) %H:%M KST"),
-                inline=True,
-            )
-
-            # 알람 설정 안내
-            alarm = await self.db.get_alarm(ctx.author.id)
-            if alarm:
-                embed.add_field(
-                    name="🔔 알람",
-                    value=f"{alarm['hours_before']}시간 전 알람 재설정됨",
-                    inline=False,
-                )
-            else:
-                embed.add_field(
-                    name="🔔 알람",
-                    value="`!붕어알람`으로 알람을 설정할 수 있습니다.",
-                    inline=False,
-                )
-
-            embed.set_footer(text=f"요청자: {ctx.author.display_name}")
-            await ctx.send(embed=embed)
-            self._schedule_next_alarm()
+            await self._send_clear_result(ctx, result)
 
         # 7일 이내 → 현황 안내
         else:
@@ -314,6 +366,23 @@ class PianusCommands(commands.Cog):
             inline=True,
         )
         embed.set_footer(text="테스트 DM을 확인해주세요!")
+        await ctx.send(embed=embed)
+        self._schedule_next_alarm()
+
+
+    @commands.command(name='붕어알람취소')
+    async def pianus_alarm_cancel(self, ctx):
+        """등록된 알람 삭제"""
+        removed = await self.db.remove_alarm(ctx.author.id)
+        if not removed:
+            await ctx.send("ℹ️ 설정된 알람이 없습니다.")
+            return
+
+        embed = discord.Embed(
+            title="🔕 붕어 알람 취소 완료",
+            description="알람이 삭제되었습니다. 더 이상 DM 알림이 가지 않습니다.",
+            color=BOT_COLOR,
+        )
         await ctx.send(embed=embed)
         self._schedule_next_alarm()
 
