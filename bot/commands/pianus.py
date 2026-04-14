@@ -426,6 +426,11 @@ class PianusCommands(commands.Cog):
             value=alarm_kst.strftime("%m/%d(%a) %H:%M KST"),
             inline=True,
         )
+        embed.add_field(
+            name="💡 팁",
+            value="`!붕어알람 N시간전`으로 알람 시간을 변경할 수 있습니다. (예: `!붕어알람 3시간전`)",
+            inline=False,
+        )
         embed.set_footer(text="테스트 DM을 확인해주세요!")
         await ctx.send(embed=embed)
         self._schedule_next_alarm()
