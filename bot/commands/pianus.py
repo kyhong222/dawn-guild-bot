@@ -327,7 +327,12 @@ class PianusCommands(commands.Cog):
         """마지막 붕어 기록 취소"""
         record = await self.db.get_record(ctx.author.id)
         if not record:
-            await ctx.send("ℹ️ 취소할 클리어 기록이 없습니다.")
+            embed = discord.Embed(
+                title="ℹ️ 취소할 클리어 기록이 없습니다",
+                description="`!붕어`로 먼저 클리어 기록을 등록해주세요.",
+                color=BOT_COLOR,
+            )
+            await ctx.send(embed=embed)
             return
 
         clear_kst = record["last_clear_time"].astimezone(KST)
@@ -335,12 +340,17 @@ class PianusCommands(commands.Cog):
 
         embed = discord.Embed(
             title="🐟 붕어 기록 취소 완료",
-            description=(
-                f"**{clear_kst.strftime('%m/%d(%a) %H:%M')}** 클리어 기록이 삭제되었습니다.\n"
-                "다음 `!붕어` 입력 시 새로 기록됩니다.\n"
-                "시간 수정만 필요했다면 `!붕어 MM/DD HH:MM`으로 덮어쓸 수도 있어요."
-            ),
+            description=f"**{clear_kst.strftime('%m/%d(%a) %H:%M')}** 클리어 기록이 삭제되었습니다.",
             color=BOT_COLOR,
+        )
+        embed.add_field(
+            name="💡 팁",
+            value=(
+                "시간 수정만 필요하다면 취소 대신 덮어쓸 수 있어요.\n"
+                "• `!붕어 21:00` — 오늘 21시로 수정\n"
+                "• `!붕어 04/13 21:00` — 특정일로 수정"
+            ),
+            inline=False,
         )
         await ctx.send(embed=embed)
         self._schedule_next_alarm()
