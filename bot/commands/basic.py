@@ -51,6 +51,20 @@ class BasicCommands(commands.Cog):
         result = random.randint(1, 100)
         await ctx.send(f"🎲 **{ctx.author.display_name}**님이 주사위를 굴려 **{result}**이(가) 나왔습니다!")
 
+    @commands.command(name='저메추', aliases=['저녁메뉴추천'])
+    async def dinner_command(self, ctx):
+        """저녁 메뉴 랜덤 추천"""
+        menus = [
+            "🍕 피자", "🍔 햄버거", "🍜 라면", "🍣 초밥", "🍗 치킨",
+            "🥘 찌개", "🍖 삼겹살", "🍲 샤브샤브", "🥩 스테이크", "🍝 파스타",
+            "🌮 타코", "🥟 만두", "🍛 카레", "🥗 샐러드", "🍱 도시락",
+            "🐟 회", "🥓 김치찌개", "🍚 비빔밥", "🥘 된장찌개", "🍜 쌀국수",
+            "🧆 떡볶이", "🥪 샌드위치", "🍢 오뎅", "🥩 갈비", "🍲 부대찌개",
+            "🐙 족발/보쌈", "🍳 제육볶음", "🥘 순두부찌개", "🍜 짜장면", "🍜 짬뽕",
+        ]
+        pick = random.choice(menus)
+        await ctx.send(f"🍽️ **{ctx.author.display_name}**님의 오늘 저녁은... **{pick}** 어떠세요?")
+
     @commands.command(name='도움말', aliases=['명령어'])
     async def help_command(self, ctx):
         """사용 가능한 명령어 목록을 표시합니다"""
@@ -100,6 +114,12 @@ class BasicCommands(commands.Cog):
         embed.add_field(
             name="📢 !고확, !마뇽, !월코",
             value="실시간 확성기 검색 (최근 1시간).\n예시: `!고확 파엘`",
+            inline=False
+        )
+
+        embed.add_field(
+            name="🍽️ !저메추, !저녁메뉴추천",
+            value="저녁 메뉴를 랜덤으로 추천해줍니다.",
             inline=False
         )
 
