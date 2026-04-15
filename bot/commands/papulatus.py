@@ -1,5 +1,5 @@
 """
-붕어(피아누스) 알람 명령어 — 7일(168시간) 쿨타임
+파풀라투스 알람 명령어 — 24시간 쿨타임
 """
 import asyncio
 import re
@@ -13,10 +13,10 @@ from bot.utils.boss_db import BossDB
 logger = logging.getLogger(__name__)
 
 KST = timezone(timedelta(hours=9))
-COOLDOWN_HOURS = 168  # 7일
-BOSS_NAME = "피아누스"
-BOSS_EMOJI = "🐟"
-CMD_PREFIX = "붕어"
+COOLDOWN_HOURS = 24
+BOSS_NAME = "파풀라투스"
+BOSS_EMOJI = "⏰"
+CMD_PREFIX = "파풀"
 
 
 def format_remaining(td: timedelta) -> str:
@@ -59,10 +59,10 @@ def parse_time(text: str):
     return None
 
 
-class PianusCommands(commands.Cog):
+class PapulatusCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db = BossDB("pianus", COOLDOWN_HOURS)
+        self.db = BossDB("papulatus", COOLDOWN_HOURS)
         self._alarm_task: asyncio.Task = None
 
     async def cog_load(self):
@@ -146,11 +146,11 @@ class PianusCommands(commands.Cog):
 
     # ─── 명령어 ───
 
-    @commands.command(name='붕어도움', aliases=['붕어도움말'])
+    @commands.command(name='파풀도움', aliases=['파풀도움말'])
     async def boss_help(self, ctx):
         embed = discord.Embed(
             title=f"{BOSS_EMOJI} {BOSS_NAME} 명령어 안내",
-            description=f"{BOSS_NAME}는 {COOLDOWN_HOURS // 24}일 쿨타임 보스입니다.",
+            description=f"{BOSS_NAME}는 {COOLDOWN_HOURS}시간 쿨타임 보스입니다.",
             color=BOT_COLOR,
         )
         embed.add_field(name=f"📝 !{CMD_PREFIX}", value=(
@@ -173,7 +173,7 @@ class PianusCommands(commands.Cog):
         embed.set_footer(text="새벽길드봇")
         await ctx.send(embed=embed)
 
-    @commands.command(name='붕어')
+    @commands.command(name='파풀')
     async def boss_command(self, ctx, *, time_input: str = None):
         record = await self.db.get_record(ctx.author.id)
         now = datetime.now(timezone.utc)
@@ -213,7 +213,7 @@ class PianusCommands(commands.Cog):
                 embed.add_field(name="🔕 알람 미설정", value=f"`!{CMD_PREFIX}알람`으로 알람을 설정할 수 있습니다.", inline=False)
             await ctx.send(embed=embed)
 
-    @commands.command(name='붕어취소')
+    @commands.command(name='파풀취소')
     async def boss_cancel(self, ctx):
         record = await self.db.get_record(ctx.author.id)
         if not record:
@@ -231,7 +231,7 @@ class PianusCommands(commands.Cog):
         await ctx.send(embed=embed)
         self._schedule_next_alarm()
 
-    @commands.command(name='붕어알람', aliases=['붕어알림'])
+    @commands.command(name='파풀알람', aliases=['파풀알림'])
     async def boss_alarm(self, ctx, *, alarm_input: str = None):
         record = await self.db.get_record(ctx.author.id)
         if not record:
@@ -275,7 +275,7 @@ class PianusCommands(commands.Cog):
         await ctx.send(embed=embed)
         self._schedule_next_alarm()
 
-    @commands.command(name='붕어알람취소')
+    @commands.command(name='파풀알람취소')
     async def boss_alarm_cancel(self, ctx):
         removed = await self.db.remove_alarm(ctx.author.id)
         if not removed:
@@ -287,4 +287,4 @@ class PianusCommands(commands.Cog):
 
 
 async def setup(bot):
-    await bot.add_cog(PianusCommands(bot))
+    await bot.add_cog(PapulatusCommands(bot))

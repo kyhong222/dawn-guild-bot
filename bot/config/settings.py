@@ -33,9 +33,8 @@ SUCCESS_MESSAGES = {
     "command_success": "✅ 명령어가 성공적으로 실행되었습니다.",
 }
 
-# 붕어(피아누스) 설정
-PIANUS_COOLDOWN_DAYS = 7  # 쿨타임 (일)
-PIANUS_DB_PATH = "data/pianus.db"  # SQLite DB 경로
+# 보스 타이머 설정
+BOSS_DB_PATH = "data/boss.db"  # SQLite DB 경로
 
 # 길드 정보
 GUILD_INFO = {
