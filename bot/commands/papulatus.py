@@ -59,6 +59,71 @@ def parse_time(text: str):
     return None
 
 
+class ClearConfirmView(discord.ui.View):
+    """파풀 클리어 확인 버튼"""
+
+    def __init__(self, cog, ctx):
+        super().__init__(timeout=60)
+        self.cog = cog
+        self.ctx = ctx
+        self.message = None  # 나중에 버튼 비활성화용
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        """명령어 입력자만 버튼 누를 수 있음"""
+        if interaction.user.id != self.ctx.author.id:
+            await interaction.response.send_message("❌ 본인만 누를 수 있습니다.", ephemeral=True)
+            return False
+        return True
+
+    async def _disable_buttons(self):
+        """버튼 비활성화"""
+        for item in self.children:
+            item.disabled = True
+        if self.message:
+            try:
+                await self.message.edit(view=self)
+            except Exception:
+                pass
+
+    async def on_timeout(self):
+        """타임아웃 시 버튼 비활성화"""
+        await self._disable_buttons()
+
+    @discord.ui.button(label="네", style=discord.ButtonStyle.green, emoji="✅")
+    async def confirm_now(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """현재 시각으로 기록"""
+        await self._disable_buttons()
+        now = datetime.now(timezone.utc)
+        result = await self.cog.db.record_clear(self.ctx.author.id, now)
+        await interaction.response.send_message(embed=self.cog._make_clear_embed(result, self.ctx))
+        self.cog._schedule_next_alarm()
+        self.stop()
+
+    @discord.ui.button(label="네 (시간 조정)", style=discord.ButtonStyle.blurple, emoji="🕐")
+    async def confirm_custom(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """시간 직접 입력 안내"""
+        await self._disable_buttons()
+        embed = discord.Embed(
+            title=f"{BOSS_EMOJI} 클리어 시각을 입력해주세요",
+            description=(
+                f"`!{CMD_PREFIX} HH:MM` 또는 `!{CMD_PREFIX} MM/DD HH:MM`\n\n"
+                f"예시:\n"
+                f"• `!{CMD_PREFIX} 21:00` — 오늘 21시\n"
+                f"• `!{CMD_PREFIX} 04/15 14:30` — 4월 15일 14시 30분"
+            ),
+            color=BOT_COLOR,
+        )
+        await interaction.response.send_message(embed=embed)
+        self.stop()
+
+    @discord.ui.button(label="아니요", style=discord.ButtonStyle.grey, emoji="❌")
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """취소"""
+        await self._disable_buttons()
+        await interaction.response.send_message("확인했습니다.", ephemeral=True)
+        self.stop()
+
+
 class PapulatusCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -129,7 +194,19 @@ class PapulatusCommands(commands.Cog):
 
     # ─── 헬퍼 ───
 
+    def _make_clear_embed(self, result: dict, ctx) -> discord.Embed:
+        """클리어 기록 결과 임베드 생성 (동기)"""
+        clear_kst = result["last_clear_time"].astimezone(KST)
+        next_kst = result["next_available_time"].astimezone(KST)
+        embed = discord.Embed(title=f"{BOSS_EMOJI} {BOSS_NAME} 클리어 기록 완료!", color=BOT_COLOR)
+        embed.add_field(name="🕐 클리어 시각", value=clear_kst.strftime("%m/%d(%a) %H:%M KST"), inline=True)
+        embed.add_field(name="⏰ 다음 도전 가능", value=next_kst.strftime("%m/%d(%a) %H:%M KST"), inline=True)
+        embed.add_field(name="🔔 알람", value=f"`!{CMD_PREFIX}알람`으로 알람을 설정할 수 있습니다.", inline=False)
+        embed.set_footer(text=f"요청자: {ctx.author.display_name}")
+        return embed
+
     async def _send_clear_result(self, ctx, result: dict):
+        """클리어 기록 결과 전송 (알람 정보 포함)"""
         clear_kst = result["last_clear_time"].astimezone(KST)
         next_kst = result["next_available_time"].astimezone(KST)
         embed = discord.Embed(title=f"{BOSS_EMOJI} {BOSS_NAME} 클리어 기록 완료!", color=BOT_COLOR)
@@ -154,9 +231,8 @@ class PapulatusCommands(commands.Cog):
             color=BOT_COLOR,
         )
         embed.add_field(name=f"📝 !{CMD_PREFIX}", value=(
-            f"클리어 기록 및 현황 확인.\n"
-            f"• `!{CMD_PREFIX}` — 기록 없거나 쿨타임 지남 → 현재시각 기록\n"
-            f"• `!{CMD_PREFIX}` — 쿨타임 이내 → 남은 시간 확인\n"
+            f"현황 확인 및 클리어 기록.\n"
+            f"• `!{CMD_PREFIX}` — 현황 확인 (도전 가능 시 기록 버튼 제공)\n"
             f"• `!{CMD_PREFIX} 21:00` — 오늘 21시로 기록\n"
             f"• `!{CMD_PREFIX} 04/13 21:00` — 특정일로 기록"
         ), inline=False)
@@ -178,12 +254,12 @@ class PapulatusCommands(commands.Cog):
         record = await self.db.get_record(ctx.author.id)
         now = datetime.now(timezone.utc)
 
+        # 특정 시각 직접 입력 → 바로 기록
         if time_input:
             clear_time = parse_time(time_input)
             if not clear_time:
                 embed = discord.Embed(title="❌ 시간 형식 오류", description=(
                     f"올바른 형식으로 입력해주세요.\n\n"
-                    f"• `!{CMD_PREFIX}` — 지금 시각 기준\n"
                     f"• `!{CMD_PREFIX} 21:00` — 오늘 21시\n"
                     f"• `!{CMD_PREFIX} 04/13 21:00` — 특정일"
                 ), color=0xFF3333)
@@ -192,9 +268,32 @@ class PapulatusCommands(commands.Cog):
             result = await self.db.record_clear(ctx.author.id, clear_time)
             return await self._send_clear_result(ctx, result)
 
+        # 기록이 없거나 쿨타임 지남 → 현황 + 클리어 확인 버튼
         if not record or now >= record["next_available_time"]:
-            result = await self.db.record_clear(ctx.author.id, now)
-            await self._send_clear_result(ctx, result)
+            embed = discord.Embed(
+                title=f"{BOSS_EMOJI} {ctx.author.display_name}님의 {BOSS_NAME} 현황",
+                description="✅ **지금 도전 가능!**",
+                color=0x00CC66,
+            )
+            if record:
+                clear_kst = record["last_clear_time"].astimezone(KST)
+                embed.add_field(name="🕐 마지막 클리어", value=clear_kst.strftime("%m/%d(%a) %H:%M"), inline=True)
+
+            alarm = await self.db.get_alarm(ctx.author.id)
+            if alarm:
+                embed.add_field(name=f"🔔 알람 ({alarm['hours_before']}시간 전)", value="다음 기록 시 재설정됨", inline=True)
+
+            embed.add_field(
+                name=f"🐟 {BOSS_NAME}를 방금 클리어 하였나요?",
+                value="아래 버튼을 눌러주세요.",
+                inline=False,
+            )
+
+            view = ClearConfirmView(self, ctx)
+            msg = await ctx.send(embed=embed, view=view)
+            view.message = msg
+
+        # 쿨타임 이내 → 현황 안내
         else:
             next_available = record["next_available_time"]
             remaining = next_available - now
