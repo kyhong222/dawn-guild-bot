@@ -130,8 +130,8 @@ class BasicCommands(commands.Cog):
         )
 
         embed.add_field(
-            name="⏰ !파풀",
-            value="파풀라투스 클리어 기록/확인. `!파풀도움`",
+            name="⏰ !파풀, !파풀알람",
+            value="파풀라투스 클리어 기록/확인 및 알람 설정.",
             inline=False
         )
 

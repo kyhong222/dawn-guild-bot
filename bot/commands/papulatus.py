@@ -291,32 +291,6 @@ class PapulatusCommands(commands.Cog):
 
     # ─── 명령어 ───
 
-    @commands.command(name='파풀도움', aliases=['파풀도움말'])
-    async def boss_help(self, ctx):
-        embed = discord.Embed(
-            title=f"{BOSS_EMOJI} {BOSS_NAME} 명령어 안내",
-            description=f"{BOSS_NAME}는 {COOLDOWN_HOURS}시간 쿨타임 보스입니다.",
-            color=BOT_COLOR,
-        )
-        embed.add_field(name=f"📝 !{CMD_PREFIX}", value=(
-            f"현황 확인 및 클리어 기록.\n"
-            f"• `!{CMD_PREFIX}` — 현황 확인 (도전 가능 시 기록 버튼 제공)\n"
-            f"• `!{CMD_PREFIX} 21:00` — 오늘 21시로 기록\n"
-            f"• `!{CMD_PREFIX} 04/13 21:00` — 특정일로 기록"
-        ), inline=False)
-        embed.add_field(name=f"↩️ !{CMD_PREFIX}취소", value=(
-            f"클리어 기록을 삭제합니다.\n"
-            f"시간을 잘못 기록했다면 `!{CMD_PREFIX} MM/DD HH:MM`으로 덮어쓸 수도 있습니다."
-        ), inline=False)
-        embed.add_field(name=f"🔔 !{CMD_PREFIX}알람, !{CMD_PREFIX}알림", value=(
-            f"DM으로 알람을 받습니다.\n"
-            f"• `!{CMD_PREFIX}알람` — 1시간 전 알람\n"
-            f"• `!{CMD_PREFIX}알람 3시간전` — 3시간 전 알람"
-        ), inline=False)
-        embed.add_field(name=f"🔕 !{CMD_PREFIX}알람취소", value="등록된 알람을 삭제합니다.", inline=False)
-        embed.set_footer(text="새벽길드봇")
-        await ctx.send(embed=embed)
-
     @commands.command(name='파풀')
     async def boss_command(self, ctx, *, time_input: str = None):
         record = await self.db.get_record(ctx.author.id)
@@ -383,24 +357,6 @@ class PapulatusCommands(commands.Cog):
             msg = await ctx.send(embed=embed, view=view)
             view.message = msg
 
-    @commands.command(name='파풀취소')
-    async def boss_cancel(self, ctx):
-        record = await self.db.get_record(ctx.author.id)
-        if not record:
-            embed = discord.Embed(title="ℹ️ 취소할 클리어 기록이 없습니다", description=f"`!{CMD_PREFIX}`로 먼저 클리어 기록을 등록해주세요.", color=BOT_COLOR)
-            await ctx.send(embed=embed)
-            return
-        clear_kst = record["last_clear_time"].astimezone(KST)
-        await self.db.delete_record(ctx.author.id)
-        embed = discord.Embed(title=f"{BOSS_EMOJI} {BOSS_NAME} 기록 취소 완료", description=f"**{clear_kst.strftime('%m/%d(%a) %H:%M')}** 클리어 기록이 삭제되었습니다.", color=BOT_COLOR)
-        embed.add_field(name="💡 팁", value=(
-            f"시간 수정만 필요하다면 취소 대신 덮어쓸 수 있어요.\n"
-            f"• `!{CMD_PREFIX} 21:00` — 오늘 21시로 수정\n"
-            f"• `!{CMD_PREFIX} 04/13 21:00` — 특정일로 수정"
-        ), inline=False)
-        await ctx.send(embed=embed)
-        self._schedule_next_alarm()
-
     @commands.command(name='파풀알람', aliases=['파풀알림'])
     async def boss_alarm(self, ctx, *, alarm_input: str = None):
         record = await self.db.get_record(ctx.author.id)
@@ -447,16 +403,6 @@ class PapulatusCommands(commands.Cog):
         view = AlarmManageView(self, ctx)
         msg = await ctx.send(embed=embed, view=view)
         view.message = msg
-        self._schedule_next_alarm()
-
-    @commands.command(name='파풀알람취소')
-    async def boss_alarm_cancel(self, ctx):
-        removed = await self.db.remove_alarm(ctx.author.id)
-        if not removed:
-            await ctx.send("ℹ️ 설정된 알람이 없습니다.")
-            return
-        embed = discord.Embed(title=f"🔕 {BOSS_NAME} 알람 취소 완료", description="알람이 삭제되었습니다. 더 이상 DM 알림이 가지 않습니다.", color=BOT_COLOR)
-        await ctx.send(embed=embed)
         self._schedule_next_alarm()
 
 
