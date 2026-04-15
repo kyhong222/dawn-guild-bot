@@ -124,8 +124,8 @@ class BasicCommands(commands.Cog):
         )
 
         embed.add_field(
-            name="🐟 !붕어",
-            value="붕어(피아누스) 클리어 기록/확인. `!붕어도움`",
+            name="🐟 !붕어, !붕어알람",
+            value="붕어(피아누스) 클리어 기록/확인 및 알람 설정.",
             inline=False
         )
 
