@@ -385,7 +385,7 @@ class PapulatusCommands(commands.Cog):
                 embed.add_field(name=f"🔔 알람 ({alarm['hours_before']}시간 전)", value="다음 기록 시 재설정됨", inline=True)
 
             embed.add_field(
-                name=f"🐟 {BOSS_NAME}를 방금 클리어 하였나요?",
+                name=f"{BOSS_EMOJI} {BOSS_NAME}를 방금 클리어 하였나요?",
                 value="아래 버튼을 눌러주세요.",
                 inline=False,
             )
