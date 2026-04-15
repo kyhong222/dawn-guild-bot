@@ -92,17 +92,16 @@ class ClearConfirmView(discord.ui.View):
     @discord.ui.button(label="네", style=discord.ButtonStyle.green, emoji="✅")
     async def confirm_now(self, interaction: discord.Interaction, button: discord.ui.Button):
         """현재 시각으로 기록"""
-        await self._disable_buttons()
         now = datetime.now(timezone.utc)
         result = await self.cog.db.record_clear(self.ctx.author.id, now)
-        await interaction.response.send_message(embed=self.cog._make_clear_embed(result, self.ctx))
+        embed = self.cog._make_clear_embed(result, self.ctx)
+        await interaction.response.edit_message(embed=embed, view=None)
         self.cog._schedule_next_alarm()
         self.stop()
 
     @discord.ui.button(label="네 (시간 조정)", style=discord.ButtonStyle.blurple, emoji="🕐")
     async def confirm_custom(self, interaction: discord.Interaction, button: discord.ui.Button):
         """시간 직접 입력 안내"""
-        await self._disable_buttons()
         embed = discord.Embed(
             title=f"{BOSS_EMOJI} 클리어 시각을 입력해주세요",
             description=(
@@ -113,14 +112,18 @@ class ClearConfirmView(discord.ui.View):
             ),
             color=BOT_COLOR,
         )
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.edit_message(embed=embed, view=None)
         self.stop()
 
     @discord.ui.button(label="아니요", style=discord.ButtonStyle.grey, emoji="❌")
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
         """취소"""
-        await self._disable_buttons()
-        await interaction.response.send_message("확인했습니다.", ephemeral=True)
+        embed = discord.Embed(
+            title=f"{BOSS_EMOJI} {self.ctx.author.display_name}님의 {BOSS_NAME} 현황",
+            description="✅ **지금 도전 가능!**",
+            color=0x00CC66,
+        )
+        await interaction.response.edit_message(embed=embed, view=None)
         self.stop()
 
 
