@@ -20,7 +20,6 @@ CMD_PREFIX = "파풀"
 
 
 def format_remaining(td: timedelta) -> str:
-    """남은 시간을 한국어로 포맷"""
     total_seconds = int(td.total_seconds())
     if total_seconds <= 0:
         return "지금 가능!"
@@ -38,7 +37,6 @@ def format_remaining(td: timedelta) -> str:
 
 
 def parse_time(text: str):
-    """시간 입력 파싱 (KST). 'MM/DD HH:MM' 또는 'HH:MM'"""
     text = text.strip()
     now_kst = datetime.now(KST)
     match = re.match(r'^(\d{1,2})/(\d{1,2})\s+(\d{1,2}):(\d{2})$', text)
@@ -59,24 +57,24 @@ def parse_time(text: str):
     return None
 
 
-class ClearConfirmView(discord.ui.View):
-    """파풀 클리어 확인 버튼"""
+# ─── View 클래스들 ───
 
-    def __init__(self, cog, ctx):
-        super().__init__(timeout=60)
+class _BaseView(discord.ui.View):
+    """공통 View 베이스"""
+
+    def __init__(self, cog, ctx, timeout=60):
+        super().__init__(timeout=timeout)
         self.cog = cog
         self.ctx = ctx
-        self.message = None  # 나중에 버튼 비활성화용
+        self.message = None
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        """명령어 입력자만 버튼 누를 수 있음"""
         if interaction.user.id != self.ctx.author.id:
             await interaction.response.send_message("❌ 본인만 누를 수 있습니다.", ephemeral=True)
             return False
         return True
 
-    async def _disable_buttons(self):
-        """버튼 비활성화"""
+    async def on_timeout(self):
         for item in self.children:
             item.disabled = True
         if self.message:
@@ -85,13 +83,12 @@ class ClearConfirmView(discord.ui.View):
             except Exception:
                 pass
 
-    async def on_timeout(self):
-        """타임아웃 시 버튼 비활성화"""
-        await self._disable_buttons()
+
+class ClearConfirmView(_BaseView):
+    """도전 가능 시 → 네 / 네(시간조정) / 아니요"""
 
     @discord.ui.button(label="네", style=discord.ButtonStyle.green, emoji="✅")
     async def confirm_now(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """현재 시각으로 기록"""
         now = datetime.now(timezone.utc)
         result = await self.cog.db.record_clear(self.ctx.author.id, now)
         embed = self.cog._make_clear_embed(result, self.ctx)
@@ -101,7 +98,6 @@ class ClearConfirmView(discord.ui.View):
 
     @discord.ui.button(label="네 (시간 조정)", style=discord.ButtonStyle.blurple, emoji="🕐")
     async def confirm_custom(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """시간 직접 입력 안내"""
         embed = discord.Embed(
             title=f"{BOSS_EMOJI} 클리어 시각을 입력해주세요",
             description=(
@@ -117,7 +113,6 @@ class ClearConfirmView(discord.ui.View):
 
     @discord.ui.button(label="아니요", style=discord.ButtonStyle.grey, emoji="❌")
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """취소"""
         embed = discord.Embed(
             title=f"{BOSS_EMOJI} {self.ctx.author.display_name}님의 {BOSS_NAME} 현황",
             description="✅ **지금 도전 가능!**",
@@ -126,6 +121,78 @@ class ClearConfirmView(discord.ui.View):
         await interaction.response.edit_message(embed=embed, view=None)
         self.stop()
 
+
+class RecordManageView(_BaseView):
+    """쿨타임 이내 → 기록 수정 / 기록 삭제"""
+
+    @discord.ui.button(label="기록 수정", style=discord.ButtonStyle.blurple, emoji="✏️")
+    async def edit_record(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(
+            title=f"{BOSS_EMOJI} 클리어 시각을 입력해주세요",
+            description=(
+                f"`!{CMD_PREFIX} HH:MM` 또는 `!{CMD_PREFIX} MM/DD HH:MM`\n\n"
+                f"예시:\n"
+                f"• `!{CMD_PREFIX} 21:00` — 오늘 21시\n"
+                f"• `!{CMD_PREFIX} 04/15 14:30` — 4월 15일 14시 30분"
+            ),
+            color=BOT_COLOR,
+        )
+        await interaction.response.edit_message(embed=embed, view=None)
+        self.stop()
+
+    @discord.ui.button(label="기록 삭제", style=discord.ButtonStyle.red, emoji="🗑️")
+    async def delete_record(self, interaction: discord.Interaction, button: discord.ui.Button):
+        record = await self.cog.db.get_record(self.ctx.author.id)
+        if record:
+            clear_kst = record["last_clear_time"].astimezone(KST)
+            await self.cog.db.delete_record(self.ctx.author.id)
+            embed = discord.Embed(
+                title=f"{BOSS_EMOJI} {BOSS_NAME} 기록 삭제 완료",
+                description=f"**{clear_kst.strftime('%m/%d(%a) %H:%M')}** 클리어 기록이 삭제되었습니다.",
+                color=BOT_COLOR,
+            )
+        else:
+            embed = discord.Embed(title="ℹ️ 이미 삭제되었습니다.", color=BOT_COLOR)
+        await interaction.response.edit_message(embed=embed, view=None)
+        self.cog._schedule_next_alarm()
+        self.stop()
+
+
+class AlarmManageView(_BaseView):
+    """알람 설정 후 → 알람 수정 / 알람 삭제"""
+
+    @discord.ui.button(label="알람 수정", style=discord.ButtonStyle.blurple, emoji="✏️")
+    async def edit_alarm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(
+            title=f"{BOSS_EMOJI} 알람 시간을 변경해주세요",
+            description=(
+                f"`!{CMD_PREFIX}알람 N시간전`\n\n"
+                f"예시:\n"
+                f"• `!{CMD_PREFIX}알람 2시간전`\n"
+                f"• `!{CMD_PREFIX}알람 12시간전`"
+            ),
+            color=BOT_COLOR,
+        )
+        await interaction.response.edit_message(embed=embed, view=None)
+        self.stop()
+
+    @discord.ui.button(label="알람 삭제", style=discord.ButtonStyle.red, emoji="🗑️")
+    async def delete_alarm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        removed = await self.cog.db.remove_alarm(self.ctx.author.id)
+        if removed:
+            embed = discord.Embed(
+                title=f"🔕 {BOSS_NAME} 알람 삭제 완료",
+                description="알람이 삭제되었습니다. 더 이상 DM 알림이 가지 않습니다.",
+                color=BOT_COLOR,
+            )
+        else:
+            embed = discord.Embed(title="ℹ️ 이미 삭제되었습니다.", color=BOT_COLOR)
+        await interaction.response.edit_message(embed=embed, view=None)
+        self.cog._schedule_next_alarm()
+        self.stop()
+
+
+# ─── Cog ───
 
 class PapulatusCommands(commands.Cog):
     def __init__(self, bot):
@@ -198,7 +265,6 @@ class PapulatusCommands(commands.Cog):
     # ─── 헬퍼 ───
 
     def _make_clear_embed(self, result: dict, ctx) -> discord.Embed:
-        """클리어 기록 결과 임베드 생성 (동기)"""
         clear_kst = result["last_clear_time"].astimezone(KST)
         next_kst = result["next_available_time"].astimezone(KST)
         embed = discord.Embed(title=f"{BOSS_EMOJI} {BOSS_NAME} 클리어 기록 완료!", color=BOT_COLOR)
@@ -209,7 +275,6 @@ class PapulatusCommands(commands.Cog):
         return embed
 
     async def _send_clear_result(self, ctx, result: dict):
-        """클리어 기록 결과 전송 (알람 정보 포함)"""
         clear_kst = result["last_clear_time"].astimezone(KST)
         next_kst = result["next_available_time"].astimezone(KST)
         embed = discord.Embed(title=f"{BOSS_EMOJI} {BOSS_NAME} 클리어 기록 완료!", color=BOT_COLOR)
@@ -296,7 +361,7 @@ class PapulatusCommands(commands.Cog):
             msg = await ctx.send(embed=embed, view=view)
             view.message = msg
 
-        # 쿨타임 이내 → 현황 안내
+        # 쿨타임 이내 → 현황 + 기록 수정/삭제 버튼
         else:
             next_available = record["next_available_time"]
             remaining = next_available - now
@@ -313,7 +378,10 @@ class PapulatusCommands(commands.Cog):
                 embed.add_field(name=f"🔔 알람 ({alarm['hours_before']}시간 전)", value=sent, inline=False)
             else:
                 embed.add_field(name="🔕 알람 미설정", value=f"`!{CMD_PREFIX}알람`으로 알람을 설정할 수 있습니다.", inline=False)
-            await ctx.send(embed=embed)
+
+            view = RecordManageView(self, ctx)
+            msg = await ctx.send(embed=embed, view=view)
+            view.message = msg
 
     @commands.command(name='파풀취소')
     async def boss_cancel(self, ctx):
@@ -357,6 +425,7 @@ class PapulatusCommands(commands.Cog):
                 await ctx.send(f"❌ 1~{COOLDOWN_HOURS}시간 사이로 입력해주세요.")
                 return
 
+        # DM 발송 테스트
         try:
             test_embed = discord.Embed(title=f"{BOSS_EMOJI} {BOSS_NAME} 알람 테스트",
                                        description=f"알람이 설정되었습니다! {hours_before}시간 전에 이 DM으로 알림을 보내드립니다.", color=BOT_COLOR)
@@ -368,13 +437,16 @@ class PapulatusCommands(commands.Cog):
             await ctx.send(embed=embed)
             return
 
+        # 알람 저장 및 결과 표시 + 버튼
         alarm_time = await self.db.set_alarm(ctx.author.id, hours_before)
         embed = discord.Embed(title=f"🔔 {BOSS_NAME} 알람 설정 완료!", color=BOT_COLOR)
         embed.add_field(name="알람", value=f"{hours_before}시간 전", inline=True)
         embed.add_field(name="다음 알람", value=alarm_time.astimezone(KST).strftime("%m/%d(%a) %H:%M KST"), inline=True)
-        embed.add_field(name="💡 팁", value=f"`!{CMD_PREFIX}알람 N시간전`으로 알람 시간을 변경할 수 있습니다.", inline=False)
         embed.set_footer(text="테스트 DM을 확인해주세요!")
-        await ctx.send(embed=embed)
+
+        view = AlarmManageView(self, ctx)
+        msg = await ctx.send(embed=embed, view=view)
+        view.message = msg
         self._schedule_next_alarm()
 
     @commands.command(name='파풀알람취소')
