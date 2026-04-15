@@ -57,6 +57,93 @@ def parse_time(text: str):
     return None
 
 
+# ─── Modal 클래스들 ───
+
+class TimeInputModal(discord.ui.Modal):
+    """클리어 시각 입력 모달"""
+
+    time_input = discord.ui.TextInput(
+        label="클리어 시각 (KST)",
+        placeholder="예: 21:00 또는 04/15 21:00",
+        style=discord.TextStyle.short,
+        required=True,
+        max_length=20,
+    )
+
+    def __init__(self, cog, ctx, original_message=None):
+        super().__init__(title=f"{BOSS_EMOJI} {BOSS_NAME} 클리어 시각 입력")
+        self.cog = cog
+        self.ctx = ctx
+        self.original_message = original_message
+
+    async def on_submit(self, interaction: discord.Interaction):
+        clear_time = parse_time(str(self.time_input))
+        if not clear_time:
+            await interaction.response.send_message(
+                "❌ 시간 형식이 올바르지 않습니다. `HH:MM` 또는 `MM/DD HH:MM` 형식으로 입력해주세요.",
+                ephemeral=True,
+            )
+            return
+
+        result = await self.cog.db.record_clear(self.ctx.author.id, clear_time)
+        embed = self.cog._make_clear_embed(result, self.ctx)
+
+        if self.original_message:
+            await self.original_message.edit(embed=embed, view=None)
+            await interaction.response.defer()
+        else:
+            await interaction.response.send_message(embed=embed)
+        self.cog._schedule_next_alarm()
+
+
+class AlarmInputModal(discord.ui.Modal):
+    """알람 시간 입력 모달"""
+
+    alarm_input = discord.ui.TextInput(
+        label="알람 시간",
+        placeholder="예: 2시간전",
+        style=discord.TextStyle.short,
+        required=True,
+        max_length=20,
+    )
+
+    def __init__(self, cog, ctx, original_message=None):
+        super().__init__(title=f"{BOSS_EMOJI} {BOSS_NAME} 알람 시간 변경")
+        self.cog = cog
+        self.ctx = ctx
+        self.original_message = original_message
+
+    async def on_submit(self, interaction: discord.Interaction):
+        text = str(self.alarm_input).strip()
+        match = re.match(r'^(\d+)\s*시간\s*전$', text)
+        if not match:
+            await interaction.response.send_message(
+                "❌ `N시간전` 형식으로 입력해주세요. (예: `2시간전`)",
+                ephemeral=True,
+            )
+            return
+
+        hours_before = int(match.group(1))
+        if hours_before <= 0 or hours_before > COOLDOWN_HOURS:
+            await interaction.response.send_message(
+                f"❌ 1~{COOLDOWN_HOURS}시간 사이로 입력해주세요.",
+                ephemeral=True,
+            )
+            return
+
+        alarm_time = await self.cog.db.set_alarm(self.ctx.author.id, hours_before)
+        embed = discord.Embed(title=f"🔔 {BOSS_NAME} 알람 설정 완료!", color=BOT_COLOR)
+        embed.add_field(name="알람", value=f"{hours_before}시간 전", inline=True)
+        embed.add_field(name="다음 알람", value=alarm_time.astimezone(KST).strftime("%m/%d(%a) %H:%M KST"), inline=True)
+
+        if self.original_message:
+            await self.original_message.edit(embed=embed, view=None)
+            await interaction.response.defer()
+        else:
+            await interaction.response.send_message(embed=embed)
+        self.cog._schedule_next_alarm()
+
+
 # ─── View 클래스들 ───
 
 class _BaseView(discord.ui.View):
@@ -96,17 +183,8 @@ class ClearConfirmView(_BaseView):
 
     @discord.ui.button(label="네 (시간 조정)", style=discord.ButtonStyle.blurple, emoji="🕐")
     async def confirm_custom(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            title=f"{BOSS_EMOJI} 클리어 시각을 입력해주세요",
-            description=(
-                f"`!{CMD_PREFIX} HH:MM` 또는 `!{CMD_PREFIX} MM/DD HH:MM`\n\n"
-                f"예시:\n"
-                f"• `!{CMD_PREFIX} 21:00` — 오늘 21시\n"
-                f"• `!{CMD_PREFIX} 04/15 14:30` — 4월 15일 14시 30분"
-            ),
-            color=BOT_COLOR,
-        )
-        await interaction.response.edit_message(embed=embed, view=None)
+        modal = TimeInputModal(self.cog, self.ctx, original_message=self.message)
+        await interaction.response.send_modal(modal)
         self.stop()
 
     @discord.ui.button(label="아니요", style=discord.ButtonStyle.grey, emoji="❌")
@@ -125,17 +203,8 @@ class RecordManageView(_BaseView):
 
     @discord.ui.button(label="기록 수정", style=discord.ButtonStyle.blurple, emoji="✏️")
     async def edit_record(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            title=f"{BOSS_EMOJI} 클리어 시각을 입력해주세요",
-            description=(
-                f"`!{CMD_PREFIX} HH:MM` 또는 `!{CMD_PREFIX} MM/DD HH:MM`\n\n"
-                f"예시:\n"
-                f"• `!{CMD_PREFIX} 21:00` — 오늘 21시\n"
-                f"• `!{CMD_PREFIX} 04/15 14:30` — 4월 15일 14시 30분"
-            ),
-            color=BOT_COLOR,
-        )
-        await interaction.response.edit_message(embed=embed, view=None)
+        modal = TimeInputModal(self.cog, self.ctx, original_message=self.message)
+        await interaction.response.send_modal(modal)
         self.stop()
 
     @discord.ui.button(label="기록 삭제", style=discord.ButtonStyle.red, emoji="🗑️")
@@ -161,17 +230,8 @@ class AlarmManageView(_BaseView):
 
     @discord.ui.button(label="알람 수정", style=discord.ButtonStyle.blurple, emoji="✏️")
     async def edit_alarm(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            title=f"{BOSS_EMOJI} 알람 시간을 변경해주세요",
-            description=(
-                f"`!{CMD_PREFIX}알람 N시간전`\n\n"
-                f"예시:\n"
-                f"• `!{CMD_PREFIX}알람 2시간전`\n"
-                f"• `!{CMD_PREFIX}알람 12시간전`"
-            ),
-            color=BOT_COLOR,
-        )
-        await interaction.response.edit_message(embed=embed, view=None)
+        modal = AlarmInputModal(self.cog, self.ctx, original_message=self.message)
+        await interaction.response.send_modal(modal)
         self.stop()
 
     @discord.ui.button(label="알람 삭제", style=discord.ButtonStyle.red, emoji="🗑️")
