@@ -51,6 +51,22 @@ class BasicCommands(commands.Cog):
         result = random.randint(1, 100)
         await ctx.send(f"🎲 **{ctx.author.display_name}**님이 주사위를 굴려 **{result}**이(가) 나왔습니다!")
 
+    @commands.command(name='점메추', aliases=['점심메뉴추천'])
+    async def lunch_command(self, ctx):
+        """점심 메뉴 랜덤 추천 (든든한 메뉴 위주)"""
+        menus = [
+            "🍖 삼겹살", "🥩 갈비", "🍛 카레 돈까스", "🍚 김치찌개 백반",
+            "🥘 된장찌개 정식", "🍜 짬뽕", "🍲 부대찌개", "🐙 족발/보쌈",
+            "🍳 제육볶음 정식", "🥩 스테이크 덮밥", "🍖 감자탕", "🍜 칼국수",
+            "🥘 순두부찌개 정식", "🍚 불고기 백반", "🍝 크림파스타",
+            "🍔 수제버거", "🍗 치킨 도시락", "🥟 왕만두", "🍜 짜장면",
+            "🍲 샤브샤브", "🍱 한식 정식", "🐟 생선구이 정식", "🍛 돈까스",
+            "🥩 소고기국밥", "🍖 뼈해장국", "🍚 쌈밥 정식", "🥘 육개장",
+            "🍜 우동", "🍲 김치찜", "🍖 갈비탕",
+        ]
+        pick = random.choice(menus)
+        await ctx.send(f"🍽️ **{ctx.author.display_name}**님의 오늘 점심은... **{pick}** 어떠세요?")
+
     @commands.command(name='저메추', aliases=['저녁메뉴추천'])
     async def dinner_command(self, ctx):
         """저녁 메뉴 랜덤 추천"""
@@ -118,8 +134,8 @@ class BasicCommands(commands.Cog):
         )
 
         embed.add_field(
-            name="🍽️ !저메추, !저녁메뉴추천",
-            value="저녁 메뉴를 랜덤으로 추천해줍니다.",
+            name="🍽️ !점메추, !저메추",
+            value="점심/저녁 메뉴를 랜덤으로 추천해줍니다.",
             inline=False
         )
 
