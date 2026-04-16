@@ -153,7 +153,7 @@ class Megaphone(commands.Cog):
         ]
         await self._send_embed(ctx, f"📢 고확 검색: {keyword}", matches, terms)
 
-    @commands.command(name="마뇽")
+    @commands.command(name="마뇽", aliases=["울음", "울음소리", "마뇽의울음소리"])
     async def manyong(self, ctx):
         """리프레 지역 마뇽/울음 매물 검색"""
         keywords = ["마뇽", "울음"]
