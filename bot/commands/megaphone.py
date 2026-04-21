@@ -142,7 +142,24 @@ class Megaphone(commands.Cog):
     async def high_search(self, ctx, *, keyword=None):
         """확성기 키워드 검색 (공백으로 여러 단어 AND)"""
         if not keyword:
-            await ctx.send("❌ 검색어를 입력해주세요. 예: `!고확 파엘`")
+            embed = discord.Embed(
+                title="📢 고확 - 확성기 검색",
+                description=(
+                    "최근 1시간 내 확성기 메시지를 검색합니다.\n\n"
+                    "**사용법:**\n"
+                    "• `!고확 파엘` — '파엘' 포함 검색\n"
+                    "• `!고확 파워 엘릭서` — '파워'와 '엘릭서' 모두 포함\n"
+                    "• `!마뇽` — 리프레 마뇽/울음 매물\n"
+                    "• `!월코` — 월코 매물"
+                ),
+                color=0xFF6B35,
+            )
+            embed.add_field(
+                name="🔗 링크",
+                value="[메가폰랜드 바로가기](https://megaphoneland.com)",
+                inline=False,
+            )
+            await ctx.send(embed=embed)
             return
 
         terms = keyword.split()
