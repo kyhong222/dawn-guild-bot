@@ -104,27 +104,19 @@ class BasicCommands(commands.Cog):
         seed = ctx.author.id * (today.year * 10000 + today.month * 100 + today.day)
         rng = random.Random(seed)
 
-        # 운세 점수
+        # 운세 등급 가중 랜덤 (대길~소길 확률 높게, 대흉 낮게)
+        # 대길15% / 길25% / 소길30% / 평18% / 흉9% / 대흉3%
+        grades = [
+            ("🌟 대길", "오늘은 모든 일이 술술 풀리는 날! 메소도 아이템도 대박!"),
+            ("✨ 길", "좋은 기운이 가득한 하루! 드랍 운이 좋을지도?"),
+            ("☀️ 소길", "무난하게 흘러가는 하루. 꾸준히 하면 좋은 일이!"),
+            ("🌥️ 평", "평범한 하루. 큰 욕심 부리지 않는 게 좋겠어요."),
+            ("🌧️ 흉", "조금 조심해야 할 하루. 강화는 내일 하는 게..."),
+            ("⛈️ 대흉", "오늘은 쉬어가는 날로! 강화/주문서는 절대 금지!"),
+        ]
+        weights = [15, 25, 30, 18, 9, 3]
+        grade, comment = rng.choices(grades, weights=weights, k=1)[0]
         luck = rng.randint(1, 100)
-
-        if luck >= 90:
-            grade = "🌟 대길"
-            comment = "오늘은 모든 일이 술술 풀리는 날! 메소도 아이템도 대박!"
-        elif luck >= 75:
-            grade = "✨ 길"
-            comment = "좋은 기운이 가득한 하루! 드랍 운이 좋을지도?"
-        elif luck >= 50:
-            grade = "☀️ 소길"
-            comment = "무난하게 흘러가는 하루. 꾸준히 하면 좋은 일이!"
-        elif luck >= 25:
-            grade = "🌥️ 평"
-            comment = "평범한 하루. 큰 욕심 부리지 않는 게 좋겠어요."
-        elif luck >= 10:
-            grade = "🌧️ 흉"
-            comment = "조금 조심해야 할 하루. 강화는 내일 하는 게..."
-        else:
-            grade = "⛈️ 대흉"
-            comment = "오늘은 쉬어가는 날로! 강화/주문서는 절대 금지!"
 
         # 오늘의 럭키 넘버
         lucky_number = rng.randint(1, 100)
