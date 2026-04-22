@@ -126,16 +126,6 @@ class BasicCommands(commands.Cog):
             grade = "⛈️ 대흉"
             comment = "오늘은 쉬어가는 날로! 강화/주문서는 절대 금지!"
 
-        # 오늘의 럭키 아이템
-        lucky_items = [
-            "파워 엘릭서", "만병통치약", "메소 주머니", "서울의 눈", "신비의 화살",
-            "빨간 모자", "파란 모자", "슬리퍼", "사과", "우유",
-            "하얀 두루마리", "10% 주문서", "60% 주문서", "백의 주문서", "혼줌",
-            "약초", "슬라임 젤리", "파란 달팽이 껍데기", "인형", "오크통",
-            "나무 방패", "검은 부적", "소환의 돌", "장미꽃", "별사탕",
-        ]
-        lucky_item = rng.choice(lucky_items)
-
         # 오늘의 럭키 넘버
         lucky_number = rng.randint(1, 100)
 
@@ -145,7 +135,6 @@ class BasicCommands(commands.Cog):
             color=BOT_COLOR,
         )
         embed.add_field(name="💬 한마디", value=comment, inline=False)
-        embed.add_field(name="🍀 럭키 아이템", value=lucky_item, inline=True)
         embed.add_field(name="🔢 럭키 넘버", value=str(lucky_number), inline=True)
         embed.set_footer(text=f"{today.strftime('%Y년 %m월 %d일')} 운세")
 
