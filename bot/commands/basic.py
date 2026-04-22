@@ -6,6 +6,7 @@ from discord.ext import commands
 from bot.config.settings import BOT_COLOR
 import time
 import random
+from datetime import date
 
 class BasicCommands(commands.Cog):
     def __init__(self, bot):
@@ -95,6 +96,61 @@ class BasicCommands(commands.Cog):
         pick = random.choice(menus)
         await ctx.send(f"🍺 **{ctx.author.display_name}**님의 오늘 안주는... **{pick}** 어떠세요?")
 
+    @commands.command(name='오늘의운세', aliases=['운세'])
+    async def fortune_command(self, ctx):
+        """오늘의 운세 (유저별 하루 고정)"""
+        # 디코ID * 날짜 기반 시드 → 같은 날 같은 유저는 항상 같은 결과
+        today = date.today()
+        seed = ctx.author.id * (today.year * 10000 + today.month * 100 + today.day)
+        rng = random.Random(seed)
+
+        # 운세 점수
+        luck = rng.randint(1, 100)
+
+        if luck >= 90:
+            grade = "🌟 대길"
+            comment = "오늘은 모든 일이 술술 풀리는 날! 메소도 아이템도 대박!"
+        elif luck >= 75:
+            grade = "✨ 길"
+            comment = "좋은 기운이 가득한 하루! 드랍 운이 좋을지도?"
+        elif luck >= 50:
+            grade = "☀️ 소길"
+            comment = "무난하게 흘러가는 하루. 꾸준히 하면 좋은 일이!"
+        elif luck >= 25:
+            grade = "🌥️ 평"
+            comment = "평범한 하루. 큰 욕심 부리지 않는 게 좋겠어요."
+        elif luck >= 10:
+            grade = "🌧️ 흉"
+            comment = "조금 조심해야 할 하루. 강화는 내일 하는 게..."
+        else:
+            grade = "⛈️ 대흉"
+            comment = "오늘은 쉬어가는 날로! 강화/주문서는 절대 금지!"
+
+        # 오늘의 럭키 아이템
+        lucky_items = [
+            "파워 엘릭서", "만병통치약", "메소 주머니", "서울의 눈", "신비의 화살",
+            "빨간 모자", "파란 모자", "슬리퍼", "사과", "우유",
+            "하얀 두루마리", "10% 주문서", "60% 주문서", "백의 주문서", "혼줌",
+            "약초", "슬라임 젤리", "파란 달팽이 껍데기", "인형", "오크통",
+            "나무 방패", "검은 부적", "소환의 돌", "장미꽃", "별사탕",
+        ]
+        lucky_item = rng.choice(lucky_items)
+
+        # 오늘의 럭키 넘버
+        lucky_number = rng.randint(1, 100)
+
+        embed = discord.Embed(
+            title=f"🔮 {ctx.author.display_name}님의 오늘의 운세",
+            description=f"**{grade}** ({luck}점)",
+            color=BOT_COLOR,
+        )
+        embed.add_field(name="💬 한마디", value=comment, inline=False)
+        embed.add_field(name="🍀 럭키 아이템", value=lucky_item, inline=True)
+        embed.add_field(name="🔢 럭키 넘버", value=str(lucky_number), inline=True)
+        embed.set_footer(text=f"{today.strftime('%Y년 %m월 %d일')} 운세")
+
+        await ctx.send(embed=embed)
+
     @commands.command(name='도움말', aliases=['명령어'])
     async def help_command(self, ctx):
         """사용 가능한 명령어 목록을 표시합니다"""
@@ -144,6 +200,12 @@ class BasicCommands(commands.Cog):
         embed.add_field(
             name="📢 !고확, !마뇽, !월코",
             value="실시간 확성기 검색 (최근 1시간).\n예시: `!고확 파엘`",
+            inline=False
+        )
+
+        embed.add_field(
+            name="🔮 !운세, !오늘의운세",
+            value="오늘의 운세를 확인합니다. (하루 고정)",
             inline=False
         )
 
