@@ -81,6 +81,20 @@ class BasicCommands(commands.Cog):
         pick = random.choice(menus)
         await ctx.send(f"🍽️ **{ctx.author.display_name}**님의 오늘 저녁은... **{pick}** 어떠세요?")
 
+    @commands.command(name='안주추천', aliases=['안주', '술안주'])
+    async def snack_command(self, ctx):
+        """술안주 랜덤 추천"""
+        menus = [
+            "🍗 치킨", "🐙 족발", "🥓 보쌈", "🐟 회/사시미", "🥩 곱창",
+            "🍖 삼겹살", "🧀 치즈 플래터", "🥟 만두", "🍢 오뎅탕", "🥜 땅콩/견과류",
+            "🍳 계란말이", "🥒 오이소박이", "🦑 마른오징어", "🍕 피자", "🥩 육회",
+            "🐔 닭발", "🐙 낙지볶음", "🥘 김치전", "🧆 떡볶이", "🍖 양꼬치",
+            "🐚 조개구이", "🥩 갈비", "🍳 두부김치", "🐟 광어회", "🍖 대창",
+            "🦐 새우튀김", "🥗 골뱅이소면", "🐙 쭈꾸미", "🧀 카프레제", "🍢 어묵탕",
+        ]
+        pick = random.choice(menus)
+        await ctx.send(f"🍺 **{ctx.author.display_name}**님의 오늘 안주는... **{pick}** 어떠세요?")
+
     @commands.command(name='도움말', aliases=['명령어'])
     async def help_command(self, ctx):
         """사용 가능한 명령어 목록을 표시합니다"""
@@ -134,8 +148,8 @@ class BasicCommands(commands.Cog):
         )
 
         embed.add_field(
-            name="🍽️ !점메추, !저메추",
-            value="점심/저녁 메뉴를 랜덤으로 추천해줍니다.",
+            name="🍽️ !점메추, !저메추, !안주추천",
+            value="점심/저녁/안주 메뉴를 랜덤으로 추천해줍니다.",
             inline=False
         )
 
