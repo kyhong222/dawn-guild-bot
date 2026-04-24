@@ -209,6 +209,12 @@ class BasicCommands(commands.Cog):
             inline=False
         )
 
+        embed.add_field(
+            name="📢 공지 알림",
+            value="메이플랜드 공지사항 자동 알림 (5분 간격).\n`!공지확인`으로 수동 확인 가능.",
+            inline=False
+        )
+
         embed.set_footer(text="새벽길드봇")
 
         await ctx.send(embed=embed)

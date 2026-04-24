@@ -36,6 +36,12 @@ SUCCESS_MESSAGES = {
 # 보스 타이머 설정
 BOSS_DB_PATH = "data/boss.db"  # SQLite DB 경로
 
+# 공지사항 알림 설정
+NOTICE_DB_PATH = "data/notice.db"  # 공지 마지막 ID 저장
+NOTICE_CHANNEL_ID = 1489857285567283271  # 공지 알림 채널 (새벽 길드 봇 채널)
+NOTICE_ROLE_ID = 1258600630650408980  # @길드원 역할 ID
+NOTICE_CHECK_INTERVAL = 300  # 조회 간격 (초, 5분)
+
 # 길드 정보
 GUILD_INFO = {
     "name": "새벽",
