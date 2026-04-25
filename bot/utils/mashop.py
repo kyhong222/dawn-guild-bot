@@ -34,24 +34,24 @@ class MashopAPI:
                 return []
 
     def _match_abbreviation(self, query: str, map_name: str) -> bool:
-        """줄임말 매칭 (블와둥 → 블루 와이번의 둥지)"""
-        # 맵 이름에서 단어 추출 (: 와 공백으로 분리)
-        words = []
-        for part in map_name.replace(":", " ").split():
-            words.append(part)
+        """줄임말 매칭 (블와둥 → 블루 와이번의 둥지, 깊바협2 → 깊은 바다 협곡2)"""
+        # 맵 이름에서 토큰 추출 (공백, :, 숫자 경계로 분리)
+        import re
+        # "협곡2" → ["협곡", "2"], "깊은" → ["깊은"]
+        tokens = re.findall(r'[가-힣a-zA-Z]+|\d+', map_name)
 
-        # 쿼리의 각 글자가 순서대로 단어 시작과 매칭되는지 확인
+        # 쿼리의 각 글자가 순서대로 토큰 시작과 매칭되는지 확인
         query_chars = list(query)
-        word_idx = 0
+        token_idx = 0
 
         for char in query_chars:
             found = False
-            while word_idx < len(words):
-                if words[word_idx].startswith(char):
+            while token_idx < len(tokens):
+                if tokens[token_idx].startswith(char):
                     found = True
-                    word_idx += 1
+                    token_idx += 1
                     break
-                word_idx += 1
+                token_idx += 1
             if not found:
                 return False
 
