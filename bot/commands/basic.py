@@ -96,6 +96,21 @@ class BasicCommands(commands.Cog):
         pick = random.choice(menus)
         await ctx.send(f"🍺 **{ctx.author.display_name}**님의 오늘 안주는... **{pick}** 어떠세요?")
 
+    @commands.command(name='고확', aliases=['마뇽', '울음', '울음소리', '마뇽의울음소리', '월코'])
+    async def megaphone_disabled(self, ctx, *args):
+        """확성기 기능 중지 안내"""
+        embed = discord.Embed(
+            title="📢 확성기 기능 중지 안내",
+            description="메가폰랜드 측 요청으로 기능을 중지했습니다.\n메가폰랜드 웹사이트를 이용해주세요.",
+            color=BOT_COLOR,
+        )
+        embed.add_field(
+            name="🔗 링크",
+            value="[메가폰랜드 바로가기](https://megaphoneland.com)",
+            inline=False,
+        )
+        await ctx.send(embed=embed)
+
     @commands.command(name='오늘의운세', aliases=['운세'])
     async def fortune_command(self, ctx):
         """오늘의 운세 (유저별 하루 고정)"""
