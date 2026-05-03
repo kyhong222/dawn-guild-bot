@@ -180,12 +180,6 @@ class BasicCommands(commands.Cog):
         )
 
         embed.add_field(
-            name="📢 !고확, !마뇽, !월코",
-            value="실시간 확성기 검색 (최근 1시간).\n예시: `!고확 파엘`",
-            inline=False
-        )
-
-        embed.add_field(
             name="🔮 !운세, !오늘의운세",
             value="오늘의 운세를 확인합니다. (하루 고정)",
             inline=False
